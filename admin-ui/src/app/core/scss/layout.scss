@@ -1,0 +1,182 @@
+@use "./variables.scss" as v;
+
+body {
+  font-family: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: v.$primary;
+  font-size: 14px;
+  background: v.$page-bg;
+  margin: 0;
+}
+
+// ── Cards (mirrors crewzo-webapp's .nz-card) ────────────────────────────────
+.nz-card {
+  background: white;
+  border: 1px solid v.$border-color;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &--grow {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.nz-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nz-card-title {
+  font-size: 14px;
+  color: v.$primary-700;
+  font-weight: 500;
+}
+
+.nz-section-link {
+  font-size: 12px;
+  color: v.$primary-400;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: v.$primary;
+    text-decoration: underline;
+  }
+}
+
+.nz-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: v.$primary;
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nz-empty-state {
+  font-size: 14px;
+  color: v.$primary-300;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.nz-text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Tables ───────────────────────────────────────────────────────────────
+// Plain markup table, not PrimeNG p-table — this tool's tables run in the tens of
+// rows per batch, never paginated production data, so the heavier dependency
+// crewzo-webapp standardizes on isn't justified here. See admin-ui/CLAUDE.md.
+.nz-table-wrap {
+  background: white;
+  border: 1px solid v.$border-color;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.nz-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead tr {
+    background: v.$surface-hover;
+    border-bottom: 1px solid v.$border-color;
+  }
+
+  th {
+    padding: 9px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: v.$primary-400;
+    text-align: left;
+    font-weight: 500;
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid v.$primary-50;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: v.$surface-hover;
+  }
+}
+
+// ── Status pills ─────────────────────────────────────────────────────────
+.nz-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 500;
+
+  &::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  &--queued {
+    background: v.$primary-50;
+    color: v.$primary-400;
+    &::before {
+      background: v.$primary-300;
+    }
+  }
+  &--sent {
+    background: v.$info-bg;
+    color: v.$info-color;
+    &::before {
+      background: v.$info-color;
+    }
+  }
+  &--accepted {
+    background: v.$success-bg;
+    color: v.$success-color;
+    &::before {
+      background: v.$success-color;
+    }
+  }
+  &--replied {
+    background: #d7f3e6;
+    color: #1f7a52;
+    &::before {
+      background: #1f7a52;
+    }
+  }
+  &--paused {
+    background: v.$warning-bg;
+    color: v.$warning-color;
+    &::before {
+      background: v.$warning-color;
+    }
+  }
+  &--bounced {
+    background: v.$error-bg;
+    color: v.$error-color;
+    &::before {
+      background: v.$error-color;
+    }
+  }
+}

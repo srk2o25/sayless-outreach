@@ -1,0 +1,23 @@
+# Env / secrets
+.env
+.env.local
+*.pem
+*.key
+
+# LinkedIn session state — never commit a live session
+linkedin-worker/session-state/
+linkedin-worker/*.session.json
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Angular
+.angular/
+
+# Postgres local data volume (if bind-mounted for dev)
+db/data/
+
+# OS
+.DS_Store

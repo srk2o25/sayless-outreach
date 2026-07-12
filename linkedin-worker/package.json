@@ -1,0 +1,25 @@
+{
+  "name": "linkedin-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright automation service for Cadence — the only service that touches a real LinkedIn session.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "login": "tsx src/session/login.ts"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "playwright": "^1.47.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}

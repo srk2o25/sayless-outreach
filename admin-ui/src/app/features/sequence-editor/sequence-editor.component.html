@@ -1,0 +1,36 @@
+<div class="nz-card">
+  <div class="nz-card-header">
+    <span class="nz-card-title">Default sequence</span>
+  </div>
+
+  <div class="seq-list" *ngIf="steps.length > 0; else emptyState">
+    <div class="seq-row" *ngFor="let step of steps; trackBy: trackByStepId" [class.is-off]="!step.enabled">
+      <div class="seq-main">
+        <div class="seq-name-row">
+          <span class="seq-idx">{{ step.stepOrder.toString().padStart(2, '0') }}</span>
+          <span class="seq-name">{{ step.name }}</span>
+        </div>
+        <div class="seq-meta">
+          <span class="chip" [class.chip-time]="step.triggerType === 'time'" [class.chip-event]="step.triggerType === 'event'">
+            {{ step.triggerType }}
+          </span>
+          <span class="chip-value">{{ triggerLabel(step) }}</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="toggle"
+        [class.is-on]="step.enabled"
+        [attr.aria-pressed]="step.enabled"
+        [attr.aria-label]="step.enabled ? 'Disable step' : 'Enable step'"
+        (click)="toggleStep(step)"
+      ></button>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="nz-empty-state" *ngIf="!loading">No sequence configured yet.</div>
+  </ng-template>
+
+  <p class="card-note">A reply at any step halts the rest of the sequence for that prospect.</p>
+</div>

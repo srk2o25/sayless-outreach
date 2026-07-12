@@ -1,0 +1,25 @@
+<!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6">
+      <path d="M4 12 L20 4 L14 20 L11 13 L4 12Z" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </div>
+  <ul class="nav-list">
+    <li *ngFor="let item of navItems; trackBy: trackByRoute">
+      <a class="nav-item" [routerLink]="item.route" routerLinkActive="nav-item--active" [title]="item.label">
+        {{ item.label.charAt(0) }}
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── Main ────────────────────────────────────────────────────────── -->
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-breadcrumb">Cadence</span>
+  </div>
+  <div class="content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

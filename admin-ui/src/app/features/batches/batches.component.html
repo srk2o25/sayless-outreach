@@ -1,0 +1,35 @@
+<div class="nz-card">
+  <div class="nz-card-header">
+    <span class="nz-card-title">Batches</span>
+  </div>
+
+  <label class="upload-row">
+    <input type="file" accept=".csv,.xlsx" (change)="onFileSelected($event)" [disabled]="uploading" />
+    <span>{{ uploading ? "Uploading…" : "Choose a CSV or XLSX file to upload" }}</span>
+  </label>
+
+  <div class="nz-table-wrap" *ngIf="campaigns.length > 0; else emptyState">
+    <table class="nz-table">
+      <thead>
+        <tr>
+          <th>Batch</th>
+          <th>Uploaded by</th>
+          <th>Rows</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let campaign of campaigns; trackBy: trackByCampaignId">
+          <td>{{ campaign.name }}</td>
+          <td>{{ campaign.uploadedBy }}</td>
+          <td>{{ campaign.rowCount }}</td>
+          <td><span class="nz-pill" [class]="'nz-pill--' + campaign.status">{{ campaign.status }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="nz-empty-state" *ngIf="!loading">No batches uploaded yet.</div>
+  </ng-template>
+</div>

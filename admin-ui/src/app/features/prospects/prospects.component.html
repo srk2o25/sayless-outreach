@@ -1,0 +1,40 @@
+<div class="nz-card">
+  <div class="nz-card-header">
+    <span class="nz-card-title">Prospects</span>
+  </div>
+
+  <div class="nz-table-wrap" *ngIf="prospects.length > 0; else emptyState">
+    <table class="nz-table">
+      <thead>
+        <tr>
+          <th>Prospect</th>
+          <th>LinkedIn</th>
+          <th>Current step</th>
+          <th>Status</th>
+          <th>Last event</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let prospect of prospects; trackBy: trackByProspectId">
+          <td>
+            <div class="prospect-cell">
+              <div class="nz-avatar">{{ initials(prospect.fullName) }}</div>
+              <div>
+                <div class="prospect-name">{{ prospect.fullName }}</div>
+                <div class="prospect-company" *ngIf="prospect.company">{{ prospect.company }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="nz-text-truncate">{{ prospect.linkedinUrl }}</td>
+          <td>{{ prospect.currentStepName }}</td>
+          <td><span class="nz-pill" [class]="'nz-pill--' + prospect.status">{{ prospect.status }}</span></td>
+          <td>{{ prospect.lastEventAt }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="nz-empty-state" *ngIf="!loading">No prospects yet. Upload a batch to get started.</div>
+  </ng-template>
+</div>

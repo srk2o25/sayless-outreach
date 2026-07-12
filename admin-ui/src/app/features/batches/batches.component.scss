@@ -1,0 +1,22 @@
+@use "../../core/scss/variables.scss" as v;
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px dashed v.$primary-200;
+  border-radius: 10px;
+  background: v.$surface-hover;
+  font-size: 13px;
+  color: v.$primary-500;
+  cursor: pointer;
+
+  &:hover {
+    border-color: v.$primary-300;
+  }
+
+  input[type="file"] {
+    font-size: 12px;
+  }
+}
