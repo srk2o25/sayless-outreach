@@ -24,11 +24,21 @@ No connection to the production Airtable CRM. File upload is the only ingestion 
 ## Local development
 
 ```bash
-cp .env.example .env   # fill in Brevo API key, Postgres creds, n8n encryption key
-docker compose up -d
+cp .env.example .env   # fill in BREVO_API_KEY; Postgres/n8n secrets already generated
+./scripts/dev-up.sh    # starts all four: db + n8n (Docker), admin-ui + linkedin-worker (background, hot reload)
 ```
 
-Admin UI: `http://localhost:4300` · n8n: `http://localhost:5678`
+- admin-ui: `http://localhost:4300` (log: `.dev-logs/admin-ui.log`)
+- n8n: `http://localhost:5678`
+- linkedin-worker: `http://localhost:4100/health` (log: `.dev-logs/linkedin-worker.log`)
+
+`./scripts/dev-up.sh` doesn't do the LinkedIn login — that needs a real browser window and you pressing Enter, so it can't run unattended. Do it once, separately:
+
+```bash
+cd linkedin-worker && npm run login
+```
+
+`./scripts/dev-down.sh` stops all four.
 
 ## Status
 

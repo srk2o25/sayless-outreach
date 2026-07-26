@@ -18,6 +18,7 @@ Run `npm run login` locally (headed browser) once, log in by hand on the dedicat
 
 ```bash
 npm install
-npm run login   # one-time, headed
+npx playwright install chromium   # one-time per machine — downloads the browser binary
+npm run login                     # one-time, headed
 npm run dev
 ```

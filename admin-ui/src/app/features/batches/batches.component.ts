@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { NgForOf, NgIf } from "@angular/common";
-import { catchError, of } from "rxjs";
+import { Observable, catchError, of } from "rxjs";
 import { BatchesService } from "../../core/services/batches.service";
 import { Campaign } from "../../core/models/campaign.model";
 
@@ -31,7 +31,7 @@ export class BatchesComponent implements OnInit {
     this.batchesService
       .uploadBatch(file, file.name)
       .pipe(
-        catchError((): ReturnType<typeof of<Campaign | null>> => {
+        catchError((): Observable<Campaign | null> => {
           return of(null);
         })
       )
@@ -51,7 +51,7 @@ export class BatchesComponent implements OnInit {
     this.batchesService
       .listCampaigns()
       .pipe(
-        catchError((): ReturnType<typeof of<Campaign[]>> => {
+        catchError((): Observable<Campaign[]> => {
           return of([]);
         })
       )

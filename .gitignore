@@ -21,3 +21,6 @@ db/data/
 
 # OS
 .DS_Store
+
+# dev-up.sh / dev-down.sh output
+.dev-logs/

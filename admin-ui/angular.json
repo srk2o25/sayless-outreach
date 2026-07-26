@@ -15,6 +15,7 @@
             "outputPath": "dist/cadence-admin-ui",
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "styles": ["src/styles.scss"]
           },
@@ -39,5 +40,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "a38cd7bf-82a8-431c-a5b6-2b7901047216"
   }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { NgForOf, NgIf } from "@angular/common";
-import { catchError, of } from "rxjs";
+import { Observable, catchError, of } from "rxjs";
 import { BatchesService } from "../../core/services/batches.service";
 import { Prospect } from "../../core/models/prospect.model";
 
@@ -41,7 +41,7 @@ export class ProspectsComponent implements OnInit {
     this.batchesService
       .listProspects(DEFAULT_CAMPAIGN_ID)
       .pipe(
-        catchError((): ReturnType<typeof of<Prospect[]>> => {
+        catchError((): Observable<Prospect[]> => {
           // n8n webhook not wired up yet during scaffold — fail quiet, show empty state.
           return of([]);
         })

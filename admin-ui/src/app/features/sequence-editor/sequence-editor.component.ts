@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { NgForOf, NgIf } from "@angular/common";
-import { catchError, of } from "rxjs";
+import { Observable, catchError, of } from "rxjs";
 import { SequenceService } from "../../core/services/sequence.service";
 import { SequenceStep } from "../../core/models/sequence-step.model";
 
@@ -43,7 +43,7 @@ export class SequenceEditorComponent implements OnInit {
     this.sequenceService
       .getSteps()
       .pipe(
-        catchError((): ReturnType<typeof of<SequenceStep[]>> => {
+        catchError((): Observable<SequenceStep[]> => {
           // n8n webhook not wired up yet during scaffold — fail quiet, show empty state.
           return of([]);
         })
