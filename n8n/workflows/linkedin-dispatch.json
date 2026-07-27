@@ -1,0 +1,131 @@
+[
+  {
+    "id": "cadlinkedindispatch",
+    "name": "linkedin-dispatch",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-dispatch",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "89e1bbfd-261c-4220-9952-b2d4a3be6d92",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "linkedin-dispatch",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "determine-endpoint",
+        "name": "Determine Endpoint",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [220, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const map = { li_connect: 'connect', li_message: 'message', li_visit: 'visit', li_invite: 'invite' };\nconst body = $json.body;\nreturn [{ json: { ...body, endpoint: map[body.action_type] } }];"
+        }
+      },
+      {
+        "id": "call-linkedin-worker",
+        "name": "Call LinkedIn Worker",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [440, 0],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.LINKEDIN_WORKER_URL }}/actions/{{$json.endpoint}}",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{ { profileUrl: $json.profile_url, note: $json.note, message: $json.message } }}",
+          "options": {
+            "response": { "response": { "neverError": true } }
+          }
+        }
+      },
+      {
+        "id": "build-event",
+        "name": "Build Event",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [660, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const result = $json;\nconst ok = result.ok === true;\nconst wh = $('Webhook').first().json.body;\nreturn [{ json: {\n  prospect_id: wh.prospect_id,\n  step_id: wh.step_id,\n  next_step_id: wh.next_step_id ?? null,\n  event_type: ok ? 'sent' : 'skipped',\n  payload: JSON.stringify(result),\n  ok,\n} }];"
+        }
+      },
+      {
+        "id": "insert-event",
+        "name": "Insert Event",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [880, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "INSERT INTO events (prospect_id, step_id, event_type, payload) VALUES ($1::int, $2::int, $3, $4::jsonb)",
+          "options": {
+            "queryReplacement": "={{ [$json.prospect_id, $json.step_id, $json.event_type, $json.payload] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "advance-step",
+        "name": "Advance Step",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [1100, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE prospects SET current_step_id = $1::int, status = CASE WHEN $1::int IS NULL THEN 'completed' ELSE 'sent' END WHERE id = $2::int AND $3::boolean = true",
+          "options": {
+            "queryReplacement": "={{ [$('Build Event').first().json.next_step_id, $('Build Event').first().json.prospect_id, $('Build Event').first().json.ok] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [1320, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const r = $('Build Event').first().json;\nreturn [{ json: { ok: r.ok, event_type: r.event_type } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [1540, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Determine Endpoint", "type": "main", "index": 0 }]] },
+      "Determine Endpoint": { "main": [[{ "node": "Call LinkedIn Worker", "type": "main", "index": 0 }]] },
+      "Call LinkedIn Worker": { "main": [[{ "node": "Build Event", "type": "main", "index": 0 }]] },
+      "Build Event": { "main": [[{ "node": "Insert Event", "type": "main", "index": 0 }]] },
+      "Insert Event": { "main": [[{ "node": "Advance Step", "type": "main", "index": 0 }]] },
+      "Advance Step": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

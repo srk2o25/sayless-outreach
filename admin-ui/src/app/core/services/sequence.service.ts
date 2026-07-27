@@ -16,7 +16,7 @@ export class SequenceService {
   }
 
   public updateStep(step: SequenceStep): Observable<SequenceStep> {
-    return this.http.put<SequenceStep>(`${this.baseUrl}/sequence-steps/${step.id}`, step);
+    return this.http.put<SequenceStep>(`${this.baseUrl}/sequence-steps`, step);
   }
 
   public reorderSteps(stepIds: number[]): Observable<void> {

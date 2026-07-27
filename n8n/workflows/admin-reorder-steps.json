@@ -1,0 +1,81 @@
+[
+  {
+    "id": "cadreordersteps01",
+    "name": "admin-reorder-steps",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-reorder",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "052ea20c-c0ac-415c-84d4-28c66c0587e4",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "sequence-steps/reorder",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "build-reorder-items",
+        "name": "Build Reorder Items",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [220, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const ids = $json.body.stepIds;\nreturn ids.map((id, index) => ({ json: { id, step_order: index + 1 } }));"
+        }
+      },
+      {
+        "id": "pg-update-step-order",
+        "name": "Update Step Order",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [440, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE sequence_steps SET step_order = $1::int WHERE id = $2::int",
+          "options": {
+            "queryReplacement": "={{ [$json.step_order, $json.id] }}",
+            "queryBatching": "transaction"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [660, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "return [{ json: { ok: true, updated: $input.all().length } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [880, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Build Reorder Items", "type": "main", "index": 0 }]] },
+      "Build Reorder Items": { "main": [[{ "node": "Update Step Order", "type": "main", "index": 0 }]] },
+      "Update Step Order": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

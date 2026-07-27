@@ -1,0 +1,54 @@
+[
+  {
+    "id": "cadupdatestep01",
+    "name": "admin-update-step",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-update-step",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "670abfb0-4b5c-40b9-a29b-fd702b824045",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["PUT"],
+          "path": "sequence-steps",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-update-step",
+        "name": "Update Step",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE sequence_steps SET name = $1, trigger_type = $2, delay_interval = $3::interval, event_condition = $4, enabled = $5 WHERE id = $6::int RETURNING *",
+          "options": {
+            "queryReplacement": "={{ [$json.body.name, $json.body.trigger_type, $json.body.delay_interval, $json.body.event_condition, $json.body.enabled, Number($json.body.id)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Update Step", "type": "main", "index": 0 }]] },
+      "Update Step": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

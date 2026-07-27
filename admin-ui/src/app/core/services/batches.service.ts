@@ -24,6 +24,6 @@ export class BatchesService {
   }
 
   public listProspects(campaignId: number): Observable<Prospect[]> {
-    return this.http.get<Prospect[]>(`${this.baseUrl}/campaigns/${campaignId}/prospects`);
+    return this.http.get<Prospect[]>(`${this.baseUrl}/prospects?campaignId=${campaignId}`);
   }
 }

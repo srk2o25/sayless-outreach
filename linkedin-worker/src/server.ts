@@ -16,25 +16,27 @@ app.get("/health", (_req, res) => {
 
 // n8n's linkedin-dispatch workflow calls these — one action per HTTP call, one
 // prospect per call. Batching stays in n8n; this service only knows how to do one thing at a time.
-app.post("/actions/connect", async (req, res) => {
-  const result = await sendConnectionRequest(req.body);
-  res.json(result);
-});
+//
+// Every route is wrapped: an action throwing (no session, selector not found,
+// Playwright timeout, ...) must fail that one request, not take down the
+// process — a crashed worker drops every other in-flight dispatch too.
+function handleAction(
+  action: (body: any) => Promise<{ ok: boolean; skippedReason?: string }>
+) {
+  return async (req: express.Request, res: express.Response) => {
+    try {
+      const result = await action(req.body);
+      res.json(result);
+    } catch (error) {
+      res.json({ ok: false, skippedReason: (error as Error).message });
+    }
+  };
+}
 
-app.post("/actions/message", async (req, res) => {
-  const result = await sendMessage(req.body);
-  res.json(result);
-});
-
-app.post("/actions/visit", async (req, res) => {
-  const result = await visitProfile(req.body);
-  res.json(result);
-});
-
-app.post("/actions/invite", async (req, res) => {
-  const result = await inviteToPage(req.body);
-  res.json(result);
-});
+app.post("/actions/connect", handleAction(sendConnectionRequest));
+app.post("/actions/message", handleAction(sendMessage));
+app.post("/actions/visit", handleAction(visitProfile));
+app.post("/actions/invite", handleAction(inviteToPage));
 
 app.listen(PORT, () => {
   console.log(`linkedin-worker listening on :${PORT}`);

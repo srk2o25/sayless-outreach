@@ -1,0 +1,52 @@
+[
+  {
+    "id": "cadcampaignprosp01",
+    "name": "admin-list-prospects",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-campaign-prospects",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "94e61fae-a5f0-4eee-ab85-cdda26c11e7e",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["GET"],
+          "path": "prospects",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-campaign-prospects",
+        "name": "List Campaign Prospects",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT * FROM prospects WHERE campaign_id = $1::int ORDER BY id",
+          "options": { "queryReplacement": "={{ [Number($json.query.campaignId)] }}" }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": { "respondWith": "allIncomingItems", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "List Campaign Prospects", "type": "main", "index": 0 }]] },
+      "List Campaign Prospects": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

@@ -24,3 +24,6 @@ db/data/
 
 # dev-up.sh / dev-down.sh output
 .dev-logs/
+
+# Local-only compose overrides (e.g. reaching host-process services from Docker)
+docker-compose.override.yml

@@ -10,8 +10,9 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./db/migrations:/docker-entrypoint-initdb.d/migrations
-      - ./db/seed:/docker-entrypoint-initdb.d/seed
+      - ./db/migrations:/cadence-migrations:ro
+      - ./db/seed:/cadence-seed:ro
+      - ./db/docker-entrypoint-initdb.sh:/docker-entrypoint-initdb.d/00-cadence.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -26,6 +27,11 @@ services:
         condition: service_healthy
     environment:
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # Workflows reference caps/URLs via {{$env.X}} per n8n/CLAUDE.md's rule
+      # (never hardcode a cap into a node) — this is a single-tenant internal
+      # tool, not a multi-tenant SaaS, so the default block (meant to stop a
+      # malicious imported workflow from exfiltrating secrets) doesn't apply.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       N8N_BASIC_AUTH_ACTIVE: "true"
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
