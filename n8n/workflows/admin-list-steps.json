@@ -27,7 +27,7 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "SELECT * FROM sequence_steps WHERE campaign_id IS NOT DISTINCT FROM $1::int ORDER BY step_order",
+          "query": "SELECT id, campaign_id AS \"campaignId\", step_order AS \"stepOrder\", name, action_type AS \"actionType\", trigger_type AS \"triggerType\", EXTRACT(DAY FROM delay_interval)::int AS \"delayIntervalDays\", event_condition AS \"eventCondition\", enabled, subject, body_template AS \"bodyTemplate\" FROM sequence_steps WHERE campaign_id IS NOT DISTINCT FROM $1::int ORDER BY step_order",
           "options": {
             "queryReplacement": "={{ [$json.query.campaignId ? Number($json.query.campaignId) : null] }}"
           }

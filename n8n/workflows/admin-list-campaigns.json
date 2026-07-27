@@ -27,7 +27,7 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "SELECT * FROM campaigns ORDER BY created_at DESC",
+          "query": "SELECT id, name, batch_filename AS \"batchFilename\", uploaded_by AS \"uploadedBy\", row_count AS \"rowCount\", status, created_at AS \"createdAt\" FROM campaigns ORDER BY created_at DESC",
           "options": {}
         },
         "credentials": {

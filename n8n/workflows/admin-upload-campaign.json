@@ -52,7 +52,7 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "INSERT INTO campaigns (name, batch_filename, uploaded_by, row_count, status) VALUES ($1, $2, $3, $4, 'active') RETURNING id, name, batch_filename, uploaded_by, row_count, status, created_at",
+          "query": "INSERT INTO campaigns (name, batch_filename, uploaded_by, row_count, status) VALUES ($1, $2, $3, $4, 'active') RETURNING id, name, batch_filename AS \"batchFilename\", uploaded_by AS \"uploadedBy\", row_count AS \"rowCount\", status, created_at AS \"createdAt\"",
           "options": {
             "queryReplacement": "={{ [$('Webhook').first().json.body.name, $('Webhook').first().binary.file.fileName, $('Webhook').first().json.body.uploadedBy ?? 'admin-ui', $('Collect Rows').first().json.rows.length] }}"
           }
@@ -70,7 +70,25 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "INSERT INTO sequence_steps (campaign_id, step_order, name, action_type, trigger_type, delay_interval, event_condition, enabled) SELECT $1::int, step_order, name, action_type, trigger_type, delay_interval, event_condition, enabled FROM sequence_steps WHERE campaign_id IS NULL",
+          "query": "INSERT INTO sequence_steps (campaign_id, step_order, name, action_type, trigger_type, delay_interval, event_condition, enabled, subject, body_template) SELECT $1::int, step_order, name, action_type, trigger_type, delay_interval, event_condition, enabled, subject, body_template FROM sequence_steps WHERE campaign_id IS NULL",
+          "options": {
+            "queryReplacement": "={{ [$('Insert Campaign').first().json.id] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "get-first-step",
+        "name": "Get First Step",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [1100, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT id FROM sequence_steps WHERE campaign_id = $1::int AND step_order = 1",
           "options": {
             "queryReplacement": "={{ [$('Insert Campaign').first().json.id] }}"
           }
@@ -84,11 +102,11 @@
         "name": "Build Prospect Rows",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [1100, 0],
+        "position": [1320, 0],
         "parameters": {
           "mode": "runOnceForAllItems",
           "language": "javaScript",
-          "jsCode": "const campaignId = $('Insert Campaign').first().json.id;\nconst rows = $('Collect Rows').first().json.rows;\nreturn rows.map((r) => ({\n  json: {\n    campaign_id: campaignId,\n    full_name: r.full_name,\n    company: r.company ?? null,\n    email: r.email ?? null,\n    linkedin_url: r.linkedin_url ?? null,\n  },\n}));"
+          "jsCode": "const campaignId = $('Insert Campaign').first().json.id;\nconst firstStepId = $('Get First Step').first().json.id;\nconst rows = $('Collect Rows').first().json.rows;\nreturn rows.map((r) => ({\n  json: {\n    campaign_id: campaignId,\n    full_name: r.full_name,\n    company: r.company ?? null,\n    email: r.email ?? null,\n    linkedin_url: r.linkedin_url ?? null,\n    current_step_id: firstStepId,\n  },\n}));"
         }
       },
       {
@@ -96,13 +114,13 @@
         "name": "Insert Prospects",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [1320, 0],
+        "position": [1540, 0],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "INSERT INTO prospects (campaign_id, full_name, company, email, linkedin_url) VALUES ($1::int, $2, $3, $4, $5)",
+          "query": "INSERT INTO prospects (campaign_id, full_name, company, email, linkedin_url, current_step_id) VALUES ($1::int, $2, $3, $4, $5, $6::int)",
           "options": {
-            "queryReplacement": "={{ [$json.campaign_id, $json.full_name, $json.company, $json.email, $json.linkedin_url] }}",
+            "queryReplacement": "={{ [$json.campaign_id, $json.full_name, $json.company, $json.email, $json.linkedin_url, $json.current_step_id] }}",
             "queryBatching": "transaction"
           }
         },
@@ -136,7 +154,8 @@
       "Parse Rows": { "main": [[{ "node": "Collect Rows", "type": "main", "index": 0 }]] },
       "Collect Rows": { "main": [[{ "node": "Insert Campaign", "type": "main", "index": 0 }]] },
       "Insert Campaign": { "main": [[{ "node": "Clone Default Sequence", "type": "main", "index": 0 }]] },
-      "Clone Default Sequence": { "main": [[{ "node": "Build Prospect Rows", "type": "main", "index": 0 }]] },
+      "Clone Default Sequence": { "main": [[{ "node": "Get First Step", "type": "main", "index": 0 }]] },
+      "Get First Step": { "main": [[{ "node": "Build Prospect Rows", "type": "main", "index": 0 }]] },
       "Build Prospect Rows": { "main": [[{ "node": "Insert Prospects", "type": "main", "index": 0 }]] },
       "Insert Prospects": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
       "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }

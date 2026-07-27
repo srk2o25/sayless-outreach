@@ -27,7 +27,7 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "SELECT * FROM prospects WHERE campaign_id = $1::int ORDER BY id",
+          "query": "SELECT p.id, p.campaign_id AS \"campaignId\", p.full_name AS \"fullName\", p.company, p.email, p.linkedin_url AS \"linkedinUrl\", s.name AS \"currentStepName\", s.step_order AS \"currentStepOrder\", p.status, p.halted, e.last_event_at AS \"lastEventAt\" FROM prospects p LEFT JOIN sequence_steps s ON s.id = p.current_step_id LEFT JOIN LATERAL (SELECT MAX(occurred_at) AS last_event_at FROM events WHERE events.prospect_id = p.id) e ON true WHERE p.campaign_id = $1::int ORDER BY p.id",
           "options": { "queryReplacement": "={{ [Number($json.query.campaignId)] }}" }
         },
         "credentials": {

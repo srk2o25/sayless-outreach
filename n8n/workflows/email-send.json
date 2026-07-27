@@ -1,0 +1,126 @@
+[
+  {
+    "id": "cademailsend0001",
+    "name": "email-send",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-email-send",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "387b9789-0433-4fd5-adf7-e209ee9bb80e",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "email-send",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "call-brevo",
+        "name": "Call Brevo",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [220, 0],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.brevo.com/v3/smtp/email",
+          "sendHeaders": true,
+          "specifyHeaders": "keypair",
+          "headerParameters": {
+            "parameters": [
+              { "name": "api-key", "value": "={{ $env.BREVO_API_KEY }}" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{ { sender: { name: 'Sayless', email: 'hello@' + $env.BREVO_SENDING_DOMAIN }, to: [ { email: $json.body.to_email, name: $json.body.to_name } ], subject: $json.body.subject, htmlContent: $json.body.html_content } }}",
+          "options": {
+            "response": { "response": { "neverError": true, "fullResponse": true } }
+          }
+        }
+      },
+      {
+        "id": "build-event",
+        "name": "Build Event",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [440, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const res = $json;\nconst ok = res.statusCode >= 200 && res.statusCode < 300;\nconst wh = $('Webhook').first().json.body;\nreturn [{ json: {\n  prospect_id: wh.prospect_id,\n  step_id: wh.step_id,\n  next_step_id: wh.next_step_id ?? null,\n  event_type: ok ? 'sent' : 'skipped',\n  payload: JSON.stringify(res.body),\n  ok,\n} }];"
+        }
+      },
+      {
+        "id": "insert-event",
+        "name": "Insert Event",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [660, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "INSERT INTO events (prospect_id, step_id, event_type, payload) VALUES ($1::int, $2::int, $3, $4::jsonb)",
+          "options": {
+            "queryReplacement": "={{ [$json.prospect_id, $json.step_id, $json.event_type, $json.payload] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "advance-step",
+        "name": "Advance Step",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [880, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE prospects SET current_step_id = $1::int, status = CASE WHEN $1::int IS NULL THEN 'completed' ELSE 'sent' END WHERE id = $2::int AND $3::boolean = true",
+          "options": {
+            "queryReplacement": "={{ [$('Build Event').first().json.next_step_id, $('Build Event').first().json.prospect_id, $('Build Event').first().json.ok] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [1100, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const r = $('Build Event').first().json;\nreturn [{ json: { ok: r.ok, event_type: r.event_type } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [1320, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Call Brevo", "type": "main", "index": 0 }]] },
+      "Call Brevo": { "main": [[{ "node": "Build Event", "type": "main", "index": 0 }]] },
+      "Build Event": { "main": [[{ "node": "Insert Event", "type": "main", "index": 0 }]] },
+      "Insert Event": { "main": [[{ "node": "Advance Step", "type": "main", "index": 0 }]] },
+      "Advance Step": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

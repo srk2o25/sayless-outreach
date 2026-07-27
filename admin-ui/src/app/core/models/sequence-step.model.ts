@@ -12,4 +12,8 @@ export interface SequenceStep {
   delayIntervalDays: number | null;
   eventCondition: EventCondition | null;
   enabled: boolean;
+  // Only set for actionType 'email' / 'email_followup'. {{full_name}} / {{company}}
+  // placeholders are plain string substitution done by daily-scheduler, not n8n expressions.
+  subject: string | null;
+  bodyTemplate: string | null;
 }

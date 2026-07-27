@@ -27,9 +27,9 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "UPDATE sequence_steps SET name = $1, trigger_type = $2, delay_interval = $3::interval, event_condition = $4, enabled = $5 WHERE id = $6::int RETURNING *",
+          "query": "UPDATE sequence_steps SET name = $1, trigger_type = $2, delay_interval = make_interval(days => $3::int), event_condition = $4, enabled = $5, subject = $6, body_template = $7 WHERE id = $8::int RETURNING id, campaign_id AS \"campaignId\", step_order AS \"stepOrder\", name, action_type AS \"actionType\", trigger_type AS \"triggerType\", EXTRACT(DAY FROM delay_interval)::int AS \"delayIntervalDays\", event_condition AS \"eventCondition\", enabled, subject, body_template AS \"bodyTemplate\"",
           "options": {
-            "queryReplacement": "={{ [$json.body.name, $json.body.trigger_type, $json.body.delay_interval, $json.body.event_condition, $json.body.enabled, Number($json.body.id)] }}"
+            "queryReplacement": "={{ [$json.body.name, $json.body.triggerType, $json.body.delayIntervalDays, $json.body.eventCondition, $json.body.enabled, $json.body.subject, $json.body.bodyTemplate, Number($json.body.id)] }}"
           }
         },
         "credentials": {
