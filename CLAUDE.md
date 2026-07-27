@@ -19,6 +19,6 @@ Per-module standards:
 
 - [x] `db` schema + migrations
 - [ ] `linkedin-worker` — connect / message / visit / invite actions built; selectors still marked `// TODO: verify` pending a real LinkedIn login/DOM check
-- [ ] `n8n` workflows — admin CRUD (list/upload campaigns, list prospects, list/update/reorder sequence steps) built and verified end-to-end; daily scheduler, LinkedIn dispatch, email send (Brevo), email events still pending
+- [x] `n8n` workflows — all 10 built and verified: admin CRUD (list/upload campaigns, list prospects, list/update/reorder sequence steps) plus the pipeline (daily-scheduler, linkedin-dispatch, email-send, email-events). Email reply detection is a known gap — see `n8n/CLAUDE.md`.
 - [x] `admin-ui` — batch upload, sequence editor, prospect dashboard, wired to real n8n webhooks and verified end-to-end
 - [ ] Deployed to target host (see `infra/deploy-notes.md`)

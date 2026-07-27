@@ -38,7 +38,7 @@
           "sendBody": true,
           "contentType": "json",
           "specifyBody": "json",
-          "jsonBody": "={{ { sender: { name: 'Sayless', email: 'hello@' + $env.BREVO_SENDING_DOMAIN }, to: [ { email: $json.body.to_email, name: $json.body.to_name } ], subject: $json.body.subject, htmlContent: $json.body.html_content } }}",
+          "jsonBody": "={{ { sender: { name: 'Sayless', email: 'hello@' + $env.BREVO_SENDING_DOMAIN }, to: [ { email: $json.body.to_email, name: $json.body.to_name } ], subject: $json.body.subject, htmlContent: $json.body.html_content, tags: [ 'prospect:' + $json.body.prospect_id, 'step:' + $json.body.step_id ] } }}",
           "options": {
             "response": { "response": { "neverError": true, "fullResponse": true } }
           }

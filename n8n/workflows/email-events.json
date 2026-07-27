@@ -1,0 +1,67 @@
+[
+  {
+    "id": "cademailevents001",
+    "name": "email-events",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-email-events",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "e692d5b5-5be3-4737-8d5a-f2c38f120de9",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "email-events",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "map-event",
+        "name": "Map Event",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [220, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "// Brevo's transactional webhook echoes back whatever `tags` were set at send\n// time (see email-send's Call Brevo node) - that's how we know which\n// prospect/step this event belongs to, since Brevo's payload otherwise only\n// has the recipient's email address, not our internal ids.\n//\n// NOTE: Brevo's standard transactional webhook does not have a native\n// \"reply\" event - that needs a separate inbound-parsing webhook, which\n// isn't set up. Only opened/clicked/bounced map here; replies are not\n// detected by this workflow today.\nconst body = $json.body;\nconst tags = body.tags || [];\nconst prospectTag = tags.find((t) => typeof t === 'string' && t.startsWith('prospect:'));\nconst stepTag = tags.find((t) => typeof t === 'string' && t.startsWith('step:'));\nconst prospectId = prospectTag ? Number(prospectTag.split(':')[1]) : null;\nconst stepId = stepTag ? Number(stepTag.split(':')[1]) : null;\n\nconst eventMap = {\n  opened: 'opened',\n  click: 'clicked',\n  hard_bounce: 'bounced',\n  soft_bounce: 'bounced',\n  blocked: 'bounced',\n  invalid_email: 'bounced',\n  spam: 'bounced',\n  unsubscribed: 'bounced',\n};\nconst eventType = eventMap[body.event] || null;\n\nreturn [{ json: {\n  prospect_id: prospectId,\n  step_id: stepId,\n  event_type: eventType,\n  payload: JSON.stringify(body),\n} }];"
+        }
+      },
+      {
+        "id": "insert-event",
+        "name": "Insert Event",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [440, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "INSERT INTO events (prospect_id, step_id, event_type, payload) SELECT $1::int, $2::int, $3, $4::jsonb WHERE $1::int IS NOT NULL AND $3 IS NOT NULL",
+          "options": {
+            "queryReplacement": "={{ [$json.prospect_id, $json.step_id, $json.event_type, $json.payload] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [660, 0],
+        "parameters": { "respondWith": "noData", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Map Event", "type": "main", "index": 0 }]] },
+      "Map Event": { "main": [[{ "node": "Insert Event", "type": "main", "index": 0 }]] },
+      "Insert Event": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

@@ -7,16 +7,18 @@ Workflows are authored visually in the n8n UI, then exported to `workflows/*.jso
 - **Export after every change.** From the n8n UI: workflow menu → Download. Overwrite the matching file in `workflows/`. A workflow that only exists in the running n8n instance and not in this folder is not considered shipped.
 - **Caps and credentials are env vars, referenced by expression, never hardcoded into a node.** `LI_DAILY_CONNECT_CAP`, `BREVO_API_KEY`, etc. come from `docker-compose.yml` environment — a workflow node reads `{{$env.LI_DAILY_CONNECT_CAP}}`, it does not contain the number `18` typed into a filter condition.
 - **The sequence lives in Postgres, not in the workflow graph.** `daily-scheduler` queries `sequence_steps` to decide what runs next for a prospect — it does not have one branch per step hardcoded. Adding a 7th step should never require editing this workflow.
-- **A reply halts everything.** Any workflow that records an `event_type = 'replied'` row must, in the same execution, set `prospects.halted = true`. No other workflow may dispatch an action for a halted prospect — `daily-scheduler`'s query excludes them at the source.
+- **A reply halts everything.** Any workflow that records an `event_type = 'replied'` row must, in the same execution, set `prospects.halted = true`. No other workflow may dispatch an action for a halted prospect — `daily-scheduler`'s query excludes them at the source. **Not yet reachable in practice**: nothing currently produces a `replied` event — see `email-events.json`'s note below on why email replies aren't detected, and LinkedIn replies aren't handled by any workflow yet either.
 
 ## The four pipeline workflows
 
+All four built and verified (see git history) — `daily-scheduler`'s dispatch and `email-send`'s live send couldn't be verified against a real LinkedIn session / Brevo key (neither exists yet outside this dev environment), so verification there is request-shape and failure-path only, not a live send.
+
 | File | Trigger | Responsibility |
 |---|---|---|
-| `daily-scheduler.json` | Cron, once daily | Reads prospects due for their next step, checks `LI_DAILY_CONNECT_CAP` / `EMAIL_DAILY_CAP_PER_INBOX` before dispatching, calls `linkedin-dispatch` or `email-send` per prospect |
-| `linkedin-dispatch.json` | Called by `daily-scheduler` | One HTTP call to `linkedin-worker`'s matching `/actions/*` endpoint per prospect, writes the result to `events` |
-| `email-send.json` | Called by `daily-scheduler` | HTTP call to Brevo's transactional send API, writes `sent` event |
-| `email-events.json` | Webhook, from Brevo | Receives open/click/bounce/reply callbacks, writes to `events`, sets `halted = true` on reply |
+| `daily-scheduler.json` | Cron, once daily (8am), plus manual "Execute workflow" | Skips prospects sitting on a disabled step forward to the next enabled one, reads prospects due for their next step (`time` steps checked against `delay_interval` since the last event or `created_at`; `event` steps checked against whether the required event already happened), applies `LI_DAILY_CONNECT_CAP` / `LI_DAILY_VISIT_CAP` / `EMAIL_DAILY_CAP_PER_INBOX` in-memory across the batch, dispatches each survivor to `linkedin-dispatch` or `email-send` |
+| `linkedin-dispatch.json` | Called by `daily-scheduler` | One HTTP call to `linkedin-worker`'s matching `/actions/*` endpoint per prospect, writes the result to `events`, advances `current_step_id` only on success |
+| `email-send.json` | Called by `daily-scheduler` | HTTP call to Brevo's transactional send API (tagged with `prospect:<id>` / `step:<id>` so `email-events` can map a later webhook callback back to it), writes `sent`/`skipped` to `events`, advances `current_step_id` only on success |
+| `email-events.json` | Webhook, from Brevo | Receives Brevo's transactional webhook (open/click/bounce), maps it to `events` using the `tags` set at send time. **Does not detect replies** — Brevo's standard transactional webhook has no native reply event; that needs a separate inbound-email-parsing setup that doesn't exist yet. The `on_reply` / `halted = true` behavior described elsewhere in this repo is not wired up by this workflow today. |
 
 ## The admin CRUD workflows
 
