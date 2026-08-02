@@ -1,10 +1,8 @@
-import { chromium } from "playwright-extra";
-import stealth from "puppeteer-extra-plugin-stealth";
 import type { Browser, BrowserContext } from "playwright";
 import path from "node:path";
 import fs from "node:fs";
-
-chromium.use(stealth());
+import { chromium } from "./browser.js";
+import { isConnectSessionActive } from "./connect-lock.js";
 
 const SESSION_DIR = process.env.SESSION_DIR ?? path.resolve("session-state");
 export const SESSION_FILE = path.join(SESSION_DIR, "linkedin.json");
@@ -22,6 +20,13 @@ export async function withSession<T>(
     throw new Error(
       "No LinkedIn session found. Run `npm run login` once, interactively, before starting the worker."
     );
+  }
+
+  // A connect session in progress is actively replacing SESSION_FILE — racing
+  // it here would mean whichever storageState() write lands last silently
+  // wins, possibly clobbering the freshly captured session.
+  if (isConnectSessionActive()) {
+    throw new Error("LinkedIn connect session in progress — action deferred.");
   }
 
   const browser: Browser = await chromium.launch({ headless: true });

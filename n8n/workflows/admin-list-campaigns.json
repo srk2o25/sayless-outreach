@@ -10,9 +10,14 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
         "webhookId": "2039df5b-beca-455a-a606-d7985601cf6d",
-        "position": [0, 0],
+        "position": [
+          0,
+          0
+        ],
         "parameters": {
-          "httpMethod": ["GET"],
+          "httpMethod": [
+            "GET"
+          ],
           "path": "campaigns",
           "responseMode": "responseNode",
           "options": {}
@@ -23,7 +28,10 @@
         "name": "List Campaigns",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [220, 0],
+        "position": [
+          220,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
@@ -31,21 +39,52 @@
           "options": {}
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
-        }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "respond",
         "name": "Respond",
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.5,
-        "position": [440, 0],
-        "parameters": { "respondWith": "allIncomingItems", "options": {} }
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $input.all().filter(i => Object.keys(i.json).length > 0).map(item => item.json) }}",
+          "options": {}
+        }
       }
     ],
     "connections": {
-      "Webhook": { "main": [[{ "node": "List Campaigns", "type": "main", "index": 0 }]] },
-      "List Campaigns": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "List Campaigns",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List Campaigns": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     },
     "settings": {}
   }

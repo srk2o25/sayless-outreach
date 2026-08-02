@@ -1,0 +1,52 @@
+[
+  {
+    "id": "cadliconnmarkconn1",
+    "name": "linkedin-connection-mark-connected",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-mark-connected",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "3632fee8-3094-4bbd-9229-d1907c7fd1b6",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "linkedin-connection/mark-connected",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-mark-connected",
+        "name": "Mark Connected",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE linkedin_connection_status SET status = 'connected', last_connected_at = now(), updated_at = now() WHERE id = (SELECT id FROM linkedin_connection_status ORDER BY id DESC LIMIT 1) RETURNING status, last_connected_at AS \"lastConnectedAt\", updated_at AS \"updatedAt\"",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Mark Connected", "type": "main", "index": 0 }]] },
+      "Mark Connected": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

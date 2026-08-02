@@ -10,9 +10,14 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
         "webhookId": "b3300916-04d2-4d23-a5a8-0cbb1894655b",
-        "position": [0, 0],
+        "position": [
+          0,
+          0
+        ],
         "parameters": {
-          "httpMethod": ["GET"],
+          "httpMethod": [
+            "GET"
+          ],
           "path": "sequence-steps",
           "responseMode": "responseNode",
           "options": {}
@@ -23,7 +28,10 @@
         "name": "List Steps",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [220, 0],
+        "position": [
+          220,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
@@ -33,21 +41,52 @@
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
-        }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "respond",
         "name": "Respond",
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.5,
-        "position": [440, 0],
-        "parameters": { "respondWith": "allIncomingItems", "options": {} }
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $input.all().filter(i => Object.keys(i.json).length > 0).map(item => item.json) }}",
+          "options": {}
+        }
       }
     ],
     "connections": {
-      "Webhook": { "main": [[{ "node": "List Steps", "type": "main", "index": 0 }]] },
-      "List Steps": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "List Steps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List Steps": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     },
     "settings": {}
   }

@@ -10,9 +10,14 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
         "webhookId": "387b9789-0433-4fd5-adf7-e209ee9bb80e",
-        "position": [0, 0],
+        "position": [
+          0,
+          0
+        ],
         "parameters": {
-          "httpMethod": ["POST"],
+          "httpMethod": [
+            "POST"
+          ],
           "path": "email-send",
           "responseMode": "responseNode",
           "options": {}
@@ -23,7 +28,10 @@
         "name": "Call Brevo",
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
-        "position": [220, 0],
+        "position": [
+          220,
+          0
+        ],
         "parameters": {
           "method": "POST",
           "url": "https://api.brevo.com/v3/smtp/email",
@@ -31,16 +39,27 @@
           "specifyHeaders": "keypair",
           "headerParameters": {
             "parameters": [
-              { "name": "api-key", "value": "={{ $env.BREVO_API_KEY }}" },
-              { "name": "Content-Type", "value": "application/json" }
+              {
+                "name": "api-key",
+                "value": "={{ $env.BREVO_API_KEY }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
             ]
           },
           "sendBody": true,
           "contentType": "json",
           "specifyBody": "json",
-          "jsonBody": "={{ { sender: { name: 'Sayless', email: 'hello@' + $env.BREVO_SENDING_DOMAIN }, to: [ { email: $json.body.to_email, name: $json.body.to_name } ], subject: $json.body.subject, htmlContent: $json.body.html_content, tags: [ 'prospect:' + $json.body.prospect_id, 'step:' + $json.body.step_id ] } }}",
+          "jsonBody": "={{ { sender: { name: $env.BREVO_SENDER_NAME, email: $env.BREVO_SENDER_EMAIL }, to: [ { email: $json.body.to_email, name: $json.body.to_name } ], subject: $json.body.subject, htmlContent: $json.body.html_content, tags: [ 'prospect:' + $json.body.prospect_id, 'step:' + $json.body.step_id ] } }}",
           "options": {
-            "response": { "response": { "neverError": true, "fullResponse": true } }
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
           }
         }
       },
@@ -49,7 +68,10 @@
         "name": "Build Event",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [440, 0],
+        "position": [
+          440,
+          0
+        ],
         "parameters": {
           "mode": "runOnceForAllItems",
           "language": "javaScript",
@@ -61,7 +83,10 @@
         "name": "Insert Event",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [660, 0],
+        "position": [
+          660,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
@@ -71,7 +96,10 @@
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -79,7 +107,10 @@
         "name": "Advance Step",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [880, 0],
+        "position": [
+          880,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
@@ -89,7 +120,10 @@
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -97,7 +131,10 @@
         "name": "Build Response",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [1100, 0],
+        "position": [
+          1100,
+          0
+        ],
         "parameters": {
           "mode": "runOnceForAllItems",
           "language": "javaScript",
@@ -109,17 +146,83 @@
         "name": "Respond",
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.5,
-        "position": [1320, 0],
-        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+        "position": [
+          1320,
+          0
+        ],
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {}
+        }
       }
     ],
     "connections": {
-      "Webhook": { "main": [[{ "node": "Call Brevo", "type": "main", "index": 0 }]] },
-      "Call Brevo": { "main": [[{ "node": "Build Event", "type": "main", "index": 0 }]] },
-      "Build Event": { "main": [[{ "node": "Insert Event", "type": "main", "index": 0 }]] },
-      "Insert Event": { "main": [[{ "node": "Advance Step", "type": "main", "index": 0 }]] },
-      "Advance Step": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
-      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Call Brevo",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Brevo": {
+        "main": [
+          [
+            {
+              "node": "Build Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Event": {
+        "main": [
+          [
+            {
+              "node": "Insert Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Event": {
+        "main": [
+          [
+            {
+              "node": "Advance Step",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Advance Step": {
+        "main": [
+          [
+            {
+              "node": "Build Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     },
     "settings": {}
   }

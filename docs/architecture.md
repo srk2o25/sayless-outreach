@@ -20,7 +20,7 @@ Self-hosted engine that runs a pre-qualified prospect list through a configurabl
    |                   |
 [ linkedin-worker ] [ Brevo, via n8n's HTTP node ]
    |                   |
-[ linkedin.com ]   [ cadence.sayless.ai sending domain ]
+[ linkedin.com ]   [ sayless.co.in sending domain ]
         |                   |
         +--- events/status back to Postgres --- Admin dashboard
 ```

@@ -1,0 +1,82 @@
+@use "../../core/scss/variables.scss" as v;
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.status-detail {
+  font-size: 12px;
+  color: v.$label-color;
+}
+
+.card-note {
+  font-size: 13px;
+  color: v.$primary-500;
+  margin: 0 0 16px;
+  max-width: 60ch;
+}
+
+.connect-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.btn-primary,
+.btn-secondary {
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: v.$primary;
+  color: #fff;
+
+  &:hover {
+    background: v.$primary-800;
+  }
+}
+
+.btn-secondary {
+  background: #fff;
+  color: v.$primary-500;
+  border-color: v.$primary-200;
+
+  &:hover {
+    border-color: v.$primary-300;
+  }
+}
+
+.live-view {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+
+  canvas {
+    border: 1px solid v.$border-color;
+    border-radius: 10px;
+    background: v.$primary-50;
+    cursor: default;
+    outline: none;
+  }
+}
+
+.nz-empty-state.success {
+  color: v.$success-color;
+  background: v.$success-bg;
+  border-radius: 8px;
+}
+
+.nz-empty-state.error {
+  color: v.$error-color;
+  background: v.$error-bg;
+  border-radius: 8px;
+}

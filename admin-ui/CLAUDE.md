@@ -6,6 +6,7 @@ Deliberate departures from `crewzo-webapp/Frontend/CLAUDE.md`, and why:
 
 - **Plain `<table>` markup, not PrimeNG `<p-table>`.** This tool's tables show tens of rows per batch, never paginated production data — the PrimeNG dependency crewzo-webapp standardizes on isn't earning its weight here.
 - **No backend API layer.** Services in `core/services/` call n8n webhook endpoints directly (`environment.n8nWebhookBaseUrl`). There is no `.NET` API to write — n8n's Postgres node and webhook triggers are the API surface. Never add direct Postgres access from this app.
+  - **One documented exception**: `LinkedinConnectionService.openConnectSocket()` opens a WebSocket straight to `linkedin-worker` (`environment.linkedinConnectWsUrl`), proxied through this app's own nginx in production (see `nginx.conf`'s `/li-connect/ws` location). A live bidirectional screencast can't be proxied through n8n's stateless webhook model, so this is the one place that rule doesn't apply — `getStatus()` on the same service stays on the normal n8n-webhook path. Don't extend this pattern to anything else; if a future feature seems to need the same treatment, that's a sign to re-examine the design, not to add a second exception.
 
 Everything else follows the same checklist as crewzo-webapp:
 

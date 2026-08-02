@@ -32,6 +32,8 @@ Not in the original spec — added because `admin-ui`'s services already call th
 | `admin-list-steps.json` | `GET /sequence-steps[?campaignId=]` | Lists steps (default template when `campaignId` omitted) |
 | `admin-update-step.json` | `PUT /sequence-steps` | Updates one step (`id` in the body, not the URL — see note below) |
 | `admin-reorder-steps.json` | `POST /sequence-steps/reorder` | Rewrites `step_order` for a list of step ids |
+| `admin-linkedin-connection-status.json` | `GET /linkedin-connection-status` | Reads the single-row `linkedin_connection_status` table, for admin-ui's status pill |
+| `linkedin-connection-mark-connected.json` | `POST /linkedin-connection/mark-connected` | Called by `linkedin-worker` itself (not admin-ui) right after a successful Connect flow captures a session — see `admin-ui/CLAUDE.md`'s documented exception for why admin-ui's *live* connect goes straight to `linkedin-worker` over a WebSocket instead of through here |
 
 ### Implementation notes for this n8n build (2.29.x)
 

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "cadliconnstatus01",
+    "name": "admin-linkedin-connection-status",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-status",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "93df40de-e945-4135-ae3a-ea6e4a896409",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["GET"],
+          "path": "linkedin-connection-status",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-status",
+        "name": "Get Status",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT status, last_connected_at AS \"lastConnectedAt\", updated_at AS \"updatedAt\" FROM linkedin_connection_status ORDER BY id DESC LIMIT 1",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Get Status", "type": "main", "index": 0 }]] },
+      "Get Status": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

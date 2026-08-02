@@ -45,7 +45,7 @@ scp session-state/linkedin.json ec2-user@<host>:~/cadence/linkedin-worker/sessio
 
 ### DNS / Brevo
 
-Add Brevo's SPF/DKIM/DMARC records to `sayless.ai`'s DNS for the `cadence.sayless.ai` subdomain before sending anything — see `docs/architecture.md` for the warmup schedule.
+Add Brevo's SPF/DKIM/DMARC records to `sayless.co.in`'s DNS (root domain, not a subdomain — see `docs/architecture.md` for the warmup schedule) before sending anything.
 
 ## Status
 

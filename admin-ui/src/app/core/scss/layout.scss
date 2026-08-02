@@ -179,4 +179,18 @@ body {
       background: v.$error-color;
     }
   }
+  &--connected {
+    background: v.$success-bg;
+    color: v.$success-color;
+    &::before {
+      background: v.$success-color;
+    }
+  }
+  &--disconnected {
+    background: v.$warning-bg;
+    color: v.$warning-color;
+    &::before {
+      background: v.$warning-color;
+    }
+  }
 }

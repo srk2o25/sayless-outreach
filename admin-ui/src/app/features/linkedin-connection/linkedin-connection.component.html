@@ -1,0 +1,45 @@
+<div class="nz-card">
+  <div class="nz-card-header">
+    <span class="nz-card-title">LinkedIn connection</span>
+  </div>
+
+  <div class="status-row" *ngIf="!loading">
+    <span class="nz-pill" [class]="'nz-pill--' + (status?.status ?? 'disconnected')">
+      {{ status?.status ?? "disconnected" }}
+    </span>
+    <span class="status-detail" *ngIf="status?.lastConnectedAt">
+      last connected {{ status?.lastConnectedAt | date: "medium" }}
+    </span>
+    <span class="status-detail" *ngIf="!status?.lastConnectedAt">never connected</span>
+  </div>
+
+  <p class="card-note">
+    Every action — connection requests, messages, profile visits — runs as whoever is
+    logged in here. Reconnecting opens a real LinkedIn login below; log in yourself,
+    including any 2FA prompt, the same as you would in a normal browser tab.
+  </p>
+
+  <div class="connect-actions" *ngIf="!connecting">
+    <button type="button" class="btn-primary" (click)="startConnect()">Reconnect LinkedIn</button>
+  </div>
+
+  <div class="live-view" *ngIf="connecting">
+    <canvas
+      #canvas
+      [width]="canvasWidth"
+      [height]="canvasHeight"
+      tabindex="0"
+      (mousedown)="onCanvasMouse($event, 'mousePressed')"
+      (mouseup)="onCanvasMouse($event, 'mouseReleased')"
+      (mousemove)="onCanvasMouse($event, 'mouseMoved')"
+      (keydown)="onCanvasKey($event, 'keyDown')"
+      (keyup)="onCanvasKey($event, 'keyUp')"
+    ></canvas>
+    <div class="connect-actions">
+      <button type="button" class="btn-secondary" (click)="cancelConnect()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="nz-empty-state success" *ngIf="loginSuccess">Connected — session saved.</div>
+  <div class="nz-empty-state error" *ngIf="errorMessage">{{ errorMessage }}</div>
+</div>

@@ -20,6 +20,13 @@ export const routes: Routes = [
         path: "batches",
         loadComponent: () => import("./features/batches/batches.component").then((m) => m.BatchesComponent),
       },
+      {
+        path: "linkedin-connection",
+        loadComponent: () =>
+          import("./features/linkedin-connection/linkedin-connection.component").then(
+            (m) => m.LinkedinConnectionComponent
+          ),
+      },
     ],
   },
 ];
