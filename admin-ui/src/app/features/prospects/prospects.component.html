@@ -1,6 +1,16 @@
 <div class="nz-card">
   <div class="nz-card-header">
     <span class="nz-card-title">Prospects</span>
+    <select
+      class="campaign-select"
+      *ngIf="campaigns.length > 0"
+      [ngModel]="selectedCampaignId"
+      (ngModelChange)="onCampaignChange($event)"
+    >
+      <option *ngFor="let campaign of campaigns; trackBy: trackByCampaignId" [ngValue]="campaign.id">
+        {{ campaign.name }}
+      </option>
+    </select>
   </div>
 
   <div class="nz-table-wrap" *ngIf="prospects.length > 0; else emptyState">
@@ -8,28 +18,76 @@
       <thead>
         <tr>
           <th>Prospect</th>
+          <th>Email</th>
           <th>LinkedIn</th>
           <th>Current step</th>
           <th>Status</th>
           <th>Last event</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let prospect of prospects; trackBy: trackByProspectId">
-          <td>
-            <div class="prospect-cell">
-              <div class="nz-avatar">{{ initials(prospect.fullName) }}</div>
-              <div>
-                <div class="prospect-name">{{ prospect.fullName }}</div>
-                <div class="prospect-company" *ngIf="prospect.company">{{ prospect.company }}</div>
+        <ng-container *ngFor="let prospect of prospects; trackBy: trackByProspectId">
+          <tr *ngIf="editingId !== prospect.id; else editRow" class="prospect-row" (click)="openTimeline(prospect)">
+            <td>
+              <div class="prospect-cell">
+                <div class="nz-avatar">{{ initials(prospect.fullName) }}</div>
+                <div>
+                  <div class="prospect-name">
+                    {{ prospect.fullName }}
+                    <span class="nz-pill nz-pill--halted" *ngIf="prospect.halted">paused</span>
+                  </div>
+                  <div class="prospect-company" *ngIf="prospect.company">{{ prospect.company }}</div>
+                </div>
               </div>
-            </div>
-          </td>
-          <td class="nz-text-truncate">{{ prospect.linkedinUrl }}</td>
-          <td>{{ prospect.currentStepName }}</td>
-          <td><span class="nz-pill" [class]="'nz-pill--' + prospect.status">{{ prospect.status }}</span></td>
-          <td>{{ prospect.lastEventAt }}</td>
-        </tr>
+            </td>
+            <td class="nz-text-truncate">{{ prospect.email }}</td>
+            <td class="nz-text-truncate">{{ prospect.linkedinUrl }}</td>
+            <td>{{ prospect.currentStepName }}</td>
+            <td><span class="nz-pill" [class]="'nz-pill--' + prospect.status">{{ prospect.status }}</span></td>
+            <td>{{ prospect.lastEventAt }}</td>
+            <td class="prospect-actions" (click)="$event.stopPropagation()">
+              <button type="button" class="nz-row-action" (click)="startEdit(prospect)">Edit</button>
+              <button type="button" class="nz-row-action" (click)="togglePause(prospect)">
+                {{ prospect.halted ? "Resume" : "Pause" }}
+              </button>
+              <button type="button" class="nz-row-action nz-row-action--danger" (click)="archiveProspect(prospect)">
+                Archive
+              </button>
+            </td>
+          </tr>
+
+          <ng-template #editRow>
+            <tr class="edit-row">
+              <td colspan="7">
+                <div class="edit-form">
+                  <label>
+                    <span>Name</span>
+                    <input type="text" [(ngModel)]="editForm.fullName" />
+                  </label>
+                  <label>
+                    <span>Company</span>
+                    <input type="text" [(ngModel)]="editForm.company" />
+                  </label>
+                  <label>
+                    <span>Email</span>
+                    <input type="email" [(ngModel)]="editForm.email" />
+                  </label>
+                  <label class="edit-field--wide">
+                    <span>LinkedIn URL</span>
+                    <input type="text" [(ngModel)]="editForm.linkedinUrl" />
+                  </label>
+                  <div class="edit-actions">
+                    <button type="button" class="nz-row-action" (click)="cancelEdit()">Cancel</button>
+                    <button type="button" class="nz-row-action nz-row-action--primary" (click)="saveEdit(prospect)">
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </ng-container>
       </tbody>
     </table>
   </div>
@@ -37,4 +95,41 @@
   <ng-template #emptyState>
     <div class="nz-empty-state" *ngIf="!loading">No prospects yet. Upload a batch to get started.</div>
   </ng-template>
+</div>
+
+<div class="nz-modal-overlay" *ngIf="timelineProspect as prospect" (click)="closeTimeline()">
+  <div class="nz-modal-card nz-modal-card--wide" (click)="$event.stopPropagation()">
+    <div class="nz-modal-header">
+      <h3>{{ prospect.fullName }} — sequence log</h3>
+      <button type="button" class="nz-modal-close" (click)="closeTimeline()">&times;</button>
+    </div>
+
+    <div class="nz-empty-state" *ngIf="timelineLoading">Loading…</div>
+    <div class="nz-empty-state error" *ngIf="timelineError">Couldn't load the sequence log.</div>
+
+    <ol class="timeline" *ngIf="!timelineLoading && !timelineError">
+      <li
+        class="timeline-step"
+        *ngFor="let step of timelineSteps; trackBy: trackByTimelineStepId"
+        [class]="'timeline-step--' + step.status"
+      >
+        <span class="timeline-marker">
+          <ng-container [ngSwitch]="step.status">
+            <svg *ngSwitchCase="'completed'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 10.5 8 14l8-8" />
+            </svg>
+            <svg *ngSwitchCase="'skipped'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 6l8 8M14 6l-8 8" />
+            </svg>
+          </ng-container>
+        </span>
+        <div class="timeline-body">
+          <div class="timeline-name">{{ step.name }}</div>
+          <div class="timeline-status">{{ timelineStatusLabel(step) }}</div>
+          <div class="timeline-reason" *ngIf="step.reason">{{ step.reason }}</div>
+        </div>
+        <div class="timeline-time">{{ timelineTimeLabel(step) }}</div>
+      </li>
+    </ol>
+  </div>
 </div>

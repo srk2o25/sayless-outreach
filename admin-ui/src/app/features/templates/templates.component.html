@@ -1,0 +1,65 @@
+<div class="templates-page">
+  <div class="nz-card categories-card">
+    <div class="nz-card-header">
+      <span class="nz-card-title">Categories</span>
+    </div>
+
+    <div class="category-list" *ngIf="categories.length > 0">
+      <div
+        class="category-row"
+        *ngFor="let category of categories; trackBy: trackByCategoryId"
+        [class.category-row--active]="category.id === selectedCategoryId"
+        (click)="selectCategory(category.id)"
+      >
+        <span class="category-name">{{ category.name }}</span>
+        <button type="button" class="nz-row-action nz-row-action--danger" (click)="deleteCategory(category); $event.stopPropagation()">
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <div class="nz-empty-state" *ngIf="categories.length === 0 && !loadingCategories">No categories yet.</div>
+
+    <form class="new-category-row" (ngSubmit)="createCategory()">
+      <input type="text" placeholder="New category name" [(ngModel)]="newCategoryName" name="newCategoryName" />
+      <button type="submit" class="nz-row-action nz-row-action--primary">Add</button>
+    </form>
+  </div>
+
+  <div class="nz-card templates-card" *ngIf="selectedCategoryId !== null">
+    <div class="nz-card-header">
+      <span class="nz-card-title">Templates</span>
+    </div>
+
+    <div class="template-row" *ngFor="let template of templates; trackBy: trackByTemplateId">
+      <ng-container *ngIf="editingTemplateId !== template.id; else editRow">
+        <div class="template-header">
+          <span class="template-type">{{ actionTypeLabel(template.actionType) }}</span>
+          <button type="button" class="nz-row-action" (click)="startEdit(template)">Edit</button>
+        </div>
+        <div class="template-subject" *ngIf="template.subject">{{ template.subject }}</div>
+        <div class="template-body" [innerHTML]="template.bodyTemplate"></div>
+      </ng-container>
+
+      <ng-template #editRow>
+        <div class="template-header">
+          <span class="template-type">{{ actionTypeLabel(template.actionType) }}</span>
+        </div>
+        <div class="edit-form">
+          <label *ngIf="template.actionType !== 'li_message'">
+            <span>Subject</span>
+            <input type="text" [(ngModel)]="editForm.subject" />
+          </label>
+          <label>
+            <span>Body</span>
+            <textarea rows="4" [(ngModel)]="editForm.bodyTemplate"></textarea>
+          </label>
+          <div class="edit-actions">
+            <button type="button" class="nz-row-action" (click)="cancelEdit()">Cancel</button>
+            <button type="button" class="nz-row-action nz-row-action--primary" (click)="saveEdit(template)">Save</button>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

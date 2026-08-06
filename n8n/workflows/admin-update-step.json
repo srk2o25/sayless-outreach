@@ -10,9 +10,14 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
         "webhookId": "670abfb0-4b5c-40b9-a29b-fd702b824045",
-        "position": [0, 0],
+        "position": [
+          0,
+          0
+        ],
         "parameters": {
-          "httpMethod": ["PUT"],
+          "httpMethod": [
+            "PUT"
+          ],
           "path": "sequence-steps",
           "responseMode": "responseNode",
           "options": {}
@@ -23,17 +28,23 @@
         "name": "Update Step",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [220, 0],
+        "position": [
+          220,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "UPDATE sequence_steps SET name = $1, trigger_type = $2, delay_interval = make_interval(days => $3::int), event_condition = $4, enabled = $5, subject = $6, body_template = $7 WHERE id = $8::int RETURNING id, campaign_id AS \"campaignId\", step_order AS \"stepOrder\", name, action_type AS \"actionType\", trigger_type AS \"triggerType\", EXTRACT(DAY FROM delay_interval)::int AS \"delayIntervalDays\", event_condition AS \"eventCondition\", enabled, subject, body_template AS \"bodyTemplate\"",
+          "query": "UPDATE sequence_steps SET name = $1, trigger_type = $2, delay_value = $3::int, delay_unit = $4, event_condition = $5, enabled = $6, subject = $7, body_template = $8 WHERE id = $9::int RETURNING id, campaign_id AS \"campaignId\", step_order AS \"stepOrder\", name, action_type AS \"actionType\", trigger_type AS \"triggerType\", delay_value AS \"delayValue\", delay_unit AS \"delayUnit\", event_condition AS \"eventCondition\", enabled, subject, body_template AS \"bodyTemplate\"",
           "options": {
-            "queryReplacement": "={{ [$json.body.name, $json.body.triggerType, $json.body.delayIntervalDays, $json.body.eventCondition, $json.body.enabled, $json.body.subject, $json.body.bodyTemplate, Number($json.body.id)] }}"
+            "queryReplacement": "={{ [$json.body.name, $json.body.triggerType, $json.body.delayValue, $json.body.delayUnit, $json.body.eventCondition, $json.body.enabled, $json.body.subject, $json.body.bodyTemplate, Number($json.body.id)] }}"
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -41,13 +52,39 @@
         "name": "Respond",
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.5,
-        "position": [440, 0],
-        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {}
+        }
       }
     ],
     "connections": {
-      "Webhook": { "main": [[{ "node": "Update Step", "type": "main", "index": 0 }]] },
-      "Update Step": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Update Step",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Step": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     },
     "settings": {}
   }

@@ -13,6 +13,10 @@ export class LinkedinConnectionService {
     return this.http.get<LinkedInConnectionStatus>(`${this.baseUrl}/linkedin-connection-status`);
   }
 
+  public disconnect(): Observable<LinkedInConnectionStatus> {
+    return this.http.post<LinkedInConnectionStatus>(`${this.baseUrl}/linkedin-connection/disconnect`, {});
+  }
+
   // EXCEPTION to admin-ui/CLAUDE.md's "no backend API layer, every call goes
   // through an n8n webhook" rule — this is the one deliberate, documented
   // case where admin-ui talks directly to linkedin-worker, because a live

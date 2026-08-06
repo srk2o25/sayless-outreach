@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cadupdatetpl00001",
+    "name": "admin-update-template",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-update-tpl",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "c8bbc5a6-f9c7-4ff1-b727-21b64b8adabc",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["PUT"],
+          "path": "templates",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-update-tpl",
+        "name": "Update Template",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE templates SET subject = $1, body_template = $2 WHERE id = $3::int RETURNING id, category_id AS \"categoryId\", action_type AS \"actionType\", subject, body_template AS \"bodyTemplate\"",
+          "options": {
+            "queryReplacement": "={{ [$json.body.subject, $json.body.bodyTemplate, Number($json.body.id)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Update Template", "type": "main", "index": 0 }]] },
+      "Update Template": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

@@ -11,5 +11,6 @@ export interface Prospect {
   currentStepOrder: number | null;
   status: ProspectStatus;
   halted: boolean;
+  archived: boolean;
   lastEventAt: string | null;
 }

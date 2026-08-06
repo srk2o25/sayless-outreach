@@ -32,6 +32,7 @@
           220,
           0
         ],
+        "onError": "continueRegularOutput",
         "parameters": {
           "method": "POST",
           "url": "https://api.brevo.com/v3/smtp/email",
@@ -75,7 +76,7 @@
         "parameters": {
           "mode": "runOnceForAllItems",
           "language": "javaScript",
-          "jsCode": "const res = $json;\nconst ok = res.statusCode >= 200 && res.statusCode < 300;\nconst wh = $('Webhook').first().json.body;\nreturn [{ json: {\n  prospect_id: wh.prospect_id,\n  step_id: wh.step_id,\n  next_step_id: wh.next_step_id ?? null,\n  event_type: ok ? 'sent' : 'skipped',\n  payload: JSON.stringify(res.body),\n  ok,\n} }];"
+          "jsCode": "const res = $json;\nconst ok = res.statusCode >= 200 && res.statusCode < 300;\nconst wh = $('Webhook').first().json.body;\nreturn [{ json: {\n  prospect_id: wh.prospect_id,\n  step_id: wh.step_id,\n  next_step_id: wh.next_step_id ?? null,\n  event_type: ok ? 'sent' : 'skipped',\n  payload: JSON.stringify(res.body ?? res),\n  ok,\n} }];"
         }
       },
       {
@@ -114,9 +115,9 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "UPDATE prospects SET current_step_id = $1::int, status = CASE WHEN $1::int IS NULL THEN 'completed' ELSE 'sent' END WHERE id = $2::int AND $3::boolean = true",
+          "query": "UPDATE prospects SET current_step_id = $1::int, status = CASE WHEN $1::int IS NULL THEN 'completed' ELSE 'sent' END WHERE id = $2::int",
           "options": {
-            "queryReplacement": "={{ [$('Build Event').first().json.next_step_id, $('Build Event').first().json.prospect_id, $('Build Event').first().json.ok] }}"
+            "queryReplacement": "={{ [$('Build Event').first().json.next_step_id, $('Build Event').first().json.prospect_id] }}"
           }
         },
         "credentials": {

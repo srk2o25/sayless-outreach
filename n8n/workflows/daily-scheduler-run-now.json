@@ -1,0 +1,245 @@
+[
+  {
+    "id": "cadrunnow0000001",
+    "name": "daily-scheduler-run-now",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-run-now",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "8374661e-fb85-442c-ba9a-cae7bb042f93",
+        "position": [
+          0,
+          0
+        ],
+        "parameters": {
+          "httpMethod": [
+            "POST"
+          ],
+          "path": "daily-scheduler/run",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "skip-disabled-steps",
+        "name": "Skip Disabled Steps",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "WITH RECURSIVE chain AS (\n  SELECT p.id AS prospect_id, s.id AS step_id, s.enabled, s.campaign_id, s.step_order, 0 AS depth\n  FROM prospects p JOIN sequence_steps s ON s.id = p.current_step_id\n  WHERE p.halted = false\n  UNION ALL\n  SELECT c.prospect_id, ns.id, ns.enabled, ns.campaign_id, ns.step_order, c.depth + 1\n  FROM chain c\n  JOIN sequence_steps ns ON ns.campaign_id = c.campaign_id AND ns.step_order = c.step_order + 1\n  WHERE c.enabled = false AND c.depth < 10\n),\nresolved AS (\n  SELECT DISTINCT ON (prospect_id) prospect_id, step_id, enabled\n  FROM chain\n  ORDER BY prospect_id, step_order DESC\n)\nUPDATE prospects p\nSET current_step_id = CASE WHEN r.enabled THEN r.step_id ELSE NULL END,\n    status = CASE WHEN NOT r.enabled THEN 'completed' ELSE p.status END\nFROM resolved r\nWHERE p.id = r.prospect_id AND r.step_id IS DISTINCT FROM p.current_step_id",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
+      },
+      {
+        "id": "get-today-counts",
+        "name": "Get Today Counts",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          440,
+          0
+        ],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT\n  (SELECT count(*) FROM events e JOIN sequence_steps s ON s.id = e.step_id WHERE s.action_type = 'li_connect' AND e.event_type = 'sent' AND e.occurred_at >= date_trunc('day', now())) AS li_connect_today,\n  (SELECT count(*) FROM events e JOIN sequence_steps s ON s.id = e.step_id WHERE s.action_type = 'li_visit' AND e.event_type = 'sent' AND e.occurred_at >= date_trunc('day', now())) AS li_visit_today,\n  (SELECT count(*) FROM events e JOIN sequence_steps s ON s.id = e.step_id WHERE s.action_type IN ('email', 'email_followup') AND e.event_type = 'sent' AND e.occurred_at >= date_trunc('day', now())) AS email_today",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
+      },
+      {
+        "id": "get-due-prospects",
+        "name": "Get Due Prospects",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT\n  p.id AS prospect_id,\n  s.id AS step_id,\n  s.campaign_id,\n  s.step_order,\n  s.action_type,\n  s.trigger_type,\n  s.event_condition,\n  s.subject,\n  s.body_template,\n  p.full_name,\n  p.company,\n  p.email,\n  p.linkedin_url,\n  (SELECT ns.id FROM sequence_steps ns WHERE ns.campaign_id = s.campaign_id AND ns.step_order > s.step_order AND ns.enabled = true ORDER BY ns.step_order LIMIT 1) AS next_step_id\nFROM prospects p\nJOIN sequence_steps s ON s.id = p.current_step_id\nWHERE p.halted = false\n  AND COALESCE((SELECT MAX(occurred_at) FROM events e WHERE e.prospect_id = p.id), p.created_at) + (s.delay_value || ' ' || s.delay_unit)::interval <= now()",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
+      },
+      {
+        "id": "apply-caps-and-route",
+        "name": "Apply Caps and Route",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const items = $input.all();\nconst counts = $('Get Today Counts').first().json;\n\nconst LI_DAILY_CONNECT_CAP = Number($env.LI_DAILY_CONNECT_CAP);\nconst LI_DAILY_VISIT_CAP = Number($env.LI_DAILY_VISIT_CAP);\nconst EMAIL_DAILY_CAP_PER_INBOX = Number($env.EMAIL_DAILY_CAP_PER_INBOX);\n\nlet liConnectCount = Number(counts.li_connect_today);\nlet liVisitCount = Number(counts.li_visit_today);\nlet emailCount = Number(counts.email_today);\n\nfunction fillTemplate(tpl, row) {\n  if (!tpl) return tpl;\n  return tpl\n    .replace(/\\{\\{full_name\\}\\}/g, row.full_name || '')\n    .replace(/\\{\\{company\\}\\}/g, row.company || '');\n}\n\nconst out = [];\nfor (const item of items) {\n  const row = item.json;\n\n  if (row.action_type === 'li_connect') {\n    if (liConnectCount >= LI_DAILY_CONNECT_CAP) continue;\n    liConnectCount++;\n    out.push({ json: {\n      target: 'linkedin-dispatch',\n      payload: {\n        prospect_id: row.prospect_id,\n        step_id: row.step_id,\n        action_type: row.action_type,\n        profile_url: row.linkedin_url,\n        next_step_id: row.next_step_id,\n      },\n    } });\n  } else if (row.action_type === 'li_visit') {\n    if (liVisitCount >= LI_DAILY_VISIT_CAP) continue;\n    liVisitCount++;\n    out.push({ json: {\n      target: 'linkedin-dispatch',\n      payload: {\n        prospect_id: row.prospect_id,\n        step_id: row.step_id,\n        action_type: row.action_type,\n        profile_url: row.linkedin_url,\n        next_step_id: row.next_step_id,\n      },\n    } });\n  } else if (row.action_type === 'li_message' || row.action_type === 'li_invite') {\n    const msg = fillTemplate(row.body_template, row);\n    out.push({ json: {\n      target: 'linkedin-dispatch',\n      payload: {\n        prospect_id: row.prospect_id,\n        step_id: row.step_id,\n        action_type: row.action_type,\n        profile_url: row.linkedin_url,\n        message: msg ? msg.replace(/<[^>]+>/g, '') : msg,\n        next_step_id: row.next_step_id,\n      },\n    } });\n  } else if (row.action_type === 'email' || row.action_type === 'email_followup') {\n    if (emailCount >= EMAIL_DAILY_CAP_PER_INBOX) continue;\n    emailCount++;\n    out.push({ json: {\n      target: 'email-send',\n      payload: {\n        prospect_id: row.prospect_id,\n        step_id: row.step_id,\n        to_email: row.email,\n        to_name: row.full_name,\n        subject: fillTemplate(row.subject, row),\n        html_content: fillTemplate(row.body_template, row),\n        next_step_id: row.next_step_id,\n      },\n    } });\n  }\n}\nreturn out;"
+        }
+      },
+      {
+        "id": "dispatch",
+        "name": "Dispatch",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          1100,
+          0
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ 'http://localhost:5678/webhook/' + $json.target }}",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.payload }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-build-run-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1320,
+          0
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "return [{ json: { ok: true, dispatched: $input.all().length } }];"
+        }
+      },
+      {
+        "id": "respond-run-now",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          1540,
+          0
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Skip Disabled Steps",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip Disabled Steps": {
+        "main": [
+          [
+            {
+              "node": "Get Today Counts",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Today Counts": {
+        "main": [
+          [
+            {
+              "node": "Get Due Prospects",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Due Prospects": {
+        "main": [
+          [
+            {
+              "node": "Apply Caps and Route",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apply Caps and Route": {
+        "main": [
+          [
+            {
+              "node": "Dispatch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Dispatch": {
+        "main": [
+          [
+            {
+              "node": "Build Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {}
+  }
+]

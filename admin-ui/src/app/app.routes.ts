@@ -1,12 +1,18 @@
 import { Routes } from "@angular/router";
 import { LayoutComponent } from "./layout/layout.component";
+import { authGuard } from "./core/guards/auth.guard";
 
 export const routes: Routes = [
   {
+    path: "login",
+    loadComponent: () => import("./features/login/login.component").then((m) => m.LoginComponent),
+  },
+  {
     path: "",
     component: LayoutComponent,
+    canActivate: [authGuard],
     children: [
-      { path: "", redirectTo: "prospects", pathMatch: "full" },
+      { path: "", redirectTo: "batches", pathMatch: "full" },
       {
         path: "prospects",
         loadComponent: () => import("./features/prospects/prospects.component").then((m) => m.ProspectsComponent),
@@ -19,6 +25,10 @@ export const routes: Routes = [
       {
         path: "batches",
         loadComponent: () => import("./features/batches/batches.component").then((m) => m.BatchesComponent),
+      },
+      {
+        path: "templates",
+        loadComponent: () => import("./features/templates/templates.component").then((m) => m.TemplatesComponent),
       },
       {
         path: "linkedin-connection",

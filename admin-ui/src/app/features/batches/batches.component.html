@@ -1,12 +1,37 @@
 <div class="nz-card">
   <div class="nz-card-header">
     <span class="nz-card-title">Batches</span>
+    <button type="button" class="nz-row-action nz-row-action--primary" [disabled]="runningPipeline" (click)="runPipelineNow()">
+      {{ runningPipeline ? "Running…" : "Run pipeline now" }}
+    </button>
+  </div>
+
+  <div class="template-category-row">
+    <span>Template category</span>
+    <select [(ngModel)]="selectedTemplateCategoryId" name="templateCategoryId">
+      <option [ngValue]="null">Choose a category…</option>
+      <option *ngFor="let category of templateCategories" [ngValue]="category.id">{{ category.name }}</option>
+    </select>
   </div>
 
   <label class="upload-row">
     <input type="file" accept=".csv,.xlsx" (change)="onFileSelected($event)" [disabled]="uploading" />
     <span>{{ uploading ? "Uploading…" : "Choose a CSV or XLSX file to upload" }}</span>
   </label>
+
+  <div class="upload-error" *ngIf="uploadError">{{ uploadError }}</div>
+
+  <div class="sample-csv-row">
+    Expected columns: <code>full_name, company, email, linkedin_url</code>
+    <button type="button" class="link-button" (click)="downloadSampleCsv()">Download sample CSV</button>
+  </div>
+
+  <div class="pipeline-hint" *ngIf="justUploaded">
+    Batch uploaded — click <strong>Run pipeline now</strong> above to dispatch any steps that are due, instead of
+    waiting for the daily 8am run.
+  </div>
+
+  <div class="pipeline-hint" *ngIf="pipelineResult">{{ pipelineResult }}</div>
 
   <div class="nz-table-wrap" *ngIf="campaigns.length > 0; else emptyState">
     <table class="nz-table">
@@ -16,6 +41,7 @@
           <th>Uploaded by</th>
           <th>Rows</th>
           <th>Status</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -24,6 +50,11 @@
           <td>{{ campaign.uploadedBy }}</td>
           <td>{{ campaign.rowCount }}</td>
           <td><span class="nz-pill" [class]="'nz-pill--' + campaign.status">{{ campaign.status }}</span></td>
+          <td class="batch-actions">
+            <button type="button" class="nz-row-action nz-row-action--danger" (click)="deleteCampaign(campaign)">
+              Delete
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>

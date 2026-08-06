@@ -1,0 +1,75 @@
+[
+  {
+    "id": "caddeletetplcat01",
+    "name": "admin-delete-template-category",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-delete-tpl-cat",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "04023dcd-8ff5-4fe8-b820-579133e395c2",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "template-categories/delete",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-delete-tpl-cat",
+        "name": "Delete Template Category",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "DELETE FROM template_categories WHERE id = $1::int RETURNING id",
+          "options": {
+            "queryReplacement": "={{ [Number($json.body.id)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [440, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const row = $input.first().json;\nreturn [{ json: { ok: row.id !== undefined, id: row.id ?? null } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [660, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Delete Template Category", "type": "main", "index": 0 }]] },
+      "Delete Template Category": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

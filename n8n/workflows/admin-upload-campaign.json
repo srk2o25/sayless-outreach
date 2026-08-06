@@ -10,9 +10,14 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2.1,
         "webhookId": "8617dfa4-c25d-465e-b5ba-2db5e7270c80",
-        "position": [0, 0],
+        "position": [
+          0,
+          0
+        ],
         "parameters": {
-          "httpMethod": ["POST"],
+          "httpMethod": [
+            "POST"
+          ],
           "path": "campaigns/upload",
           "responseMode": "responseNode",
           "options": {}
@@ -23,7 +28,10 @@
         "name": "Parse Rows",
         "type": "n8n-nodes-base.spreadsheetFile",
         "typeVersion": 2,
-        "position": [220, 0],
+        "position": [
+          220,
+          0
+        ],
         "parameters": {
           "operation": "fromFile",
           "binaryPropertyName": "file",
@@ -35,7 +43,10 @@
         "name": "Collect Rows",
         "type": "n8n-nodes-base.aggregate",
         "typeVersion": 1,
-        "position": [440, 0],
+        "position": [
+          440,
+          0
+        ],
         "parameters": {
           "aggregate": "aggregateAllItemData",
           "destinationFieldName": "rows",
@@ -48,17 +59,23 @@
         "name": "Insert Campaign",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [660, 0],
+        "position": [
+          660,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "INSERT INTO campaigns (name, batch_filename, uploaded_by, row_count, status) VALUES ($1, $2, $3, $4, 'active') RETURNING id, name, batch_filename AS \"batchFilename\", uploaded_by AS \"uploadedBy\", row_count AS \"rowCount\", status, created_at AS \"createdAt\"",
+          "query": "INSERT INTO campaigns (name, batch_filename, uploaded_by, row_count, status, template_category_id) VALUES ($1, $2, $3, $4, 'active', $5) RETURNING id, name, batch_filename AS \"batchFilename\", uploaded_by AS \"uploadedBy\", row_count AS \"rowCount\", status, created_at AS \"createdAt\"",
           "options": {
-            "queryReplacement": "={{ [$('Webhook').first().json.body.name, $('Webhook').first().binary.file.fileName, $('Webhook').first().json.body.uploadedBy ?? 'admin-ui', $('Collect Rows').first().json.rows.length] }}"
+            "queryReplacement": "={{ [$('Webhook').first().json.body.name, $('Webhook').first().binary.file.fileName, $('Webhook').first().json.body.uploadedBy ?? 'admin-ui', $('Collect Rows').first().json.rows.length, $('Webhook').first().json.body.templateCategoryId ? Number($('Webhook').first().json.body.templateCategoryId) : null] }}"
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -66,17 +83,23 @@
         "name": "Clone Default Sequence",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [880, 0],
+        "position": [
+          880,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "INSERT INTO sequence_steps (campaign_id, step_order, name, action_type, trigger_type, delay_interval, event_condition, enabled, subject, body_template) SELECT $1::int, step_order, name, action_type, trigger_type, delay_interval, event_condition, enabled, subject, body_template FROM sequence_steps WHERE campaign_id IS NULL",
+          "query": "INSERT INTO sequence_steps (campaign_id, step_order, name, action_type, trigger_type, delay_value, delay_unit, event_condition, enabled, subject, body_template) SELECT $1::int, step_order, name, action_type, trigger_type, delay_value, delay_unit, event_condition, enabled, subject, body_template FROM sequence_steps WHERE campaign_id IS NULL",
           "options": {
             "queryReplacement": "={{ [$('Insert Campaign').first().json.id] }}"
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -84,7 +107,10 @@
         "name": "Get First Step",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [1100, 0],
+        "position": [
+          1320,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
@@ -94,7 +120,10 @@
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -102,7 +131,10 @@
         "name": "Build Prospect Rows",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [1320, 0],
+        "position": [
+          1540,
+          0
+        ],
         "parameters": {
           "mode": "runOnceForAllItems",
           "language": "javaScript",
@@ -114,7 +146,10 @@
         "name": "Insert Prospects",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.6,
-        "position": [1540, 0],
+        "position": [
+          1760,
+          0
+        ],
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
@@ -125,7 +160,10 @@
           }
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
         }
       },
       {
@@ -133,7 +171,10 @@
         "name": "Build Response",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
-        "position": [1540, 0],
+        "position": [
+          1760,
+          0
+        ],
         "parameters": {
           "mode": "runOnceForAllItems",
           "language": "javaScript",
@@ -145,20 +186,151 @@
         "name": "Respond",
         "type": "n8n-nodes-base.respondToWebhook",
         "typeVersion": 1.5,
-        "position": [1760, 0],
-        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+        "position": [
+          1980,
+          0
+        ],
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-apply-template-content",
+        "name": "Apply Template Content",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE sequence_steps s SET subject = t.subject, body_template = t.body_template FROM templates t WHERE s.campaign_id = $1::int AND t.category_id = $2::int AND t.action_type = s.action_type",
+          "options": {
+            "queryReplacement": "={{ [$('Insert Campaign').first().json.id, $('Webhook').first().json.body.templateCategoryId ? Number($('Webhook').first().json.body.templateCategoryId) : null] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
       }
     ],
     "connections": {
-      "Webhook": { "main": [[{ "node": "Parse Rows", "type": "main", "index": 0 }]] },
-      "Parse Rows": { "main": [[{ "node": "Collect Rows", "type": "main", "index": 0 }]] },
-      "Collect Rows": { "main": [[{ "node": "Insert Campaign", "type": "main", "index": 0 }]] },
-      "Insert Campaign": { "main": [[{ "node": "Clone Default Sequence", "type": "main", "index": 0 }]] },
-      "Clone Default Sequence": { "main": [[{ "node": "Get First Step", "type": "main", "index": 0 }]] },
-      "Get First Step": { "main": [[{ "node": "Build Prospect Rows", "type": "main", "index": 0 }]] },
-      "Build Prospect Rows": { "main": [[{ "node": "Insert Prospects", "type": "main", "index": 0 }]] },
-      "Insert Prospects": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
-      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Parse Rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Rows": {
+        "main": [
+          [
+            {
+              "node": "Collect Rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Collect Rows": {
+        "main": [
+          [
+            {
+              "node": "Insert Campaign",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Campaign": {
+        "main": [
+          [
+            {
+              "node": "Clone Default Sequence",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clone Default Sequence": {
+        "main": [
+          [
+            {
+              "node": "Apply Template Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get First Step": {
+        "main": [
+          [
+            {
+              "node": "Build Prospect Rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prospect Rows": {
+        "main": [
+          [
+            {
+              "node": "Insert Prospects",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Prospects": {
+        "main": [
+          [
+            {
+              "node": "Build Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apply Template Content": {
+        "main": [
+          [
+            {
+              "node": "Get First Step",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     },
     "settings": {}
   }

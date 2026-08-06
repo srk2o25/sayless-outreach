@@ -32,6 +32,9 @@ services:
       # tool, not a multi-tenant SaaS, so the default block (meant to stop a
       # malicious imported workflow from exfiltrating secrets) doesn't apply.
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # auth-login's Code node needs Node's built-in crypto module to hash/verify
+      # passwords — same "single-tenant internal tool" reasoning as the block above.
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
       N8N_BASIC_AUTH_ACTIVE: "true"
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}

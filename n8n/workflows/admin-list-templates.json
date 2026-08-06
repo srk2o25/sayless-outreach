@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cadlisttpl000001",
+    "name": "admin-list-templates",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-list-tpl",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "c1efa613-0c8c-4c01-9cd9-e91337821fff",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["GET"],
+          "path": "templates",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-list-tpl",
+        "name": "List Templates",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT id, category_id AS \"categoryId\", action_type AS \"actionType\", subject, body_template AS \"bodyTemplate\" FROM templates WHERE category_id = $1::int ORDER BY action_type",
+          "options": {
+            "queryReplacement": "={{ [Number($json.query.categoryId)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $input.all().filter(i => Object.keys(i.json).length > 0).map(item => item.json) }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "List Templates", "type": "main", "index": 0 }]] },
+      "List Templates": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

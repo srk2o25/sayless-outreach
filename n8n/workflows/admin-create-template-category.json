@@ -1,0 +1,96 @@
+[
+  {
+    "id": "cadcreatetplcat01",
+    "name": "admin-create-template-category",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-create-tpl-cat",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "89147814-bd4e-4016-a89d-e4f735b60782",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "template-categories",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-insert-category",
+        "name": "Insert Category",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "INSERT INTO template_categories (name) VALUES ($1) RETURNING id, name",
+          "options": {
+            "queryReplacement": "={{ [$json.body.name] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
+      },
+      {
+        "id": "pg-insert-blank-templates",
+        "name": "Insert Blank Templates",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [440, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "INSERT INTO templates (category_id, action_type, subject, body_template) VALUES ($1::int, 'li_message', NULL, ''), ($1::int, 'email', '', ''), ($1::int, 'email_followup', '', '')",
+          "options": {
+            "queryReplacement": "={{ [$json.id] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
+      },
+      {
+        "id": "code-build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [660, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const category = $('Insert Category').first().json;\nreturn [{ json: { id: category.id, name: category.name } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [880, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Insert Category", "type": "main", "index": 0 }]] },
+      "Insert Category": { "main": [[{ "node": "Insert Blank Templates", "type": "main", "index": 0 }]] },
+      "Insert Blank Templates": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

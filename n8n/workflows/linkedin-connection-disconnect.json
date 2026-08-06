@@ -1,0 +1,81 @@
+[
+  {
+    "id": "cadlidisconnect01",
+    "name": "linkedin-connection-disconnect",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-li-disconnect",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "b85bcc3d-7228-40b9-8948-5b14e03cc831",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "linkedin-connection/disconnect",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "http-call-worker",
+        "name": "Call LinkedIn Worker",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [220, 0],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.LINKEDIN_WORKER_URL }}/actions/disconnect",
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{ {} }}",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "pg-mark-disconnected",
+        "name": "Mark Disconnected",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [440, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE linkedin_connection_status SET status = 'disconnected', updated_at = now() WHERE id = (SELECT id FROM linkedin_connection_status ORDER BY id DESC LIMIT 1) RETURNING status, last_connected_at AS \"lastConnectedAt\", updated_at AS \"updatedAt\"",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [660, 0],
+        "parameters": {
+          "respondWith": "firstIncomingItem",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Call LinkedIn Worker", "type": "main", "index": 0 }]] },
+      "Call LinkedIn Worker": { "main": [[{ "node": "Mark Disconnected", "type": "main", "index": 0 }]] },
+      "Mark Disconnected": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

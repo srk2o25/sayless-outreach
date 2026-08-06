@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cadupdateprospect01",
+    "name": "admin-update-prospect",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-update-prospect",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "0f2816ee-132f-4d21-a014-2871dfc9aea8",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["PUT"],
+          "path": "prospects",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-update-prospect",
+        "name": "Update Prospect",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "UPDATE prospects SET full_name = $1, company = $2, email = $3, linkedin_url = $4, halted = $5, archived = $6 WHERE id = $7::int RETURNING id, campaign_id AS \"campaignId\", full_name AS \"fullName\", company, email, linkedin_url AS \"linkedinUrl\", status, halted, archived",
+          "options": {
+            "queryReplacement": "={{ [$json.body.fullName, $json.body.company, $json.body.email, $json.body.linkedinUrl, $json.body.halted, $json.body.archived, Number($json.body.id)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [440, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Update Prospect", "type": "main", "index": 0 }]] },
+      "Update Prospect": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

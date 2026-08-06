@@ -1,0 +1,75 @@
+[
+  {
+    "id": "caddeletecampaign01",
+    "name": "admin-delete-campaign",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-delete-campaign",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "aa106556-4566-4a08-b707-01803b22a424",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "campaigns/delete",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-delete-campaign",
+        "name": "Delete Campaign",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "DELETE FROM campaigns WHERE id = $1::int RETURNING id",
+          "options": {
+            "queryReplacement": "={{ [Number($json.body.id)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [440, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const row = $input.first().json;\nreturn [{ json: { ok: row.id !== undefined, id: row.id ?? null } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [660, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Delete Campaign", "type": "main", "index": 0 }]] },
+      "Delete Campaign": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

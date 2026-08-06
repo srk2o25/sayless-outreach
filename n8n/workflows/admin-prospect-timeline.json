@@ -1,0 +1,68 @@
+[
+  {
+    "id": "cadprospecttimeline",
+    "name": "admin-prospect-timeline",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-prospect-timeline",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "2fe8dcd0-28b9-434f-8a4d-cdda7375f9ba",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["GET"],
+          "path": "prospect-timeline",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-prospect-timeline",
+        "name": "Get Prospect Timeline Data",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT p.id AS \"prospectId\", p.created_at AS \"createdAt\", p.current_step_id AS \"currentStepId\", p.halted, p.status, (SELECT COALESCE(json_agg(json_build_object('id', s.id, 'stepOrder', s.step_order, 'name', s.name, 'actionType', s.action_type, 'delayValue', s.delay_value, 'delayUnit', s.delay_unit) ORDER BY s.step_order), '[]'::json) FROM sequence_steps s WHERE s.campaign_id = p.campaign_id AND s.enabled = true) AS steps, (SELECT COALESCE(json_agg(json_build_object('stepId', e.step_id, 'eventType', e.event_type, 'occurredAt', e.occurred_at, 'payload', e.payload) ORDER BY e.occurred_at), '[]'::json) FROM events e WHERE e.prospect_id = p.id) AS events FROM prospects p WHERE p.id = $1::int",
+          "options": {
+            "queryReplacement": "={{ [Number($json.query.prospectId)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-build-timeline",
+        "name": "Build Timeline",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [440, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const row = $input.first()?.json;\nif (!row) {\n  return [{ json: { prospectId: null, halted: false, timeline: [] } }];\n}\n\nconst steps = row.steps || [];\nconst events = row.events || [];\n\nfunction delayMs(value, unit) {\n  const n = Number(value) || 0;\n  return unit === 'days' ? n * 24 * 60 * 60 * 1000 : n * 60 * 60 * 1000;\n}\n\n// Every action that can fail reports the reason under a different key\n// (LinkedIn actions: skippedReason; Brevo: message; a raw network error from\n// onError:continueRegularOutput: error) - normalize to one field so the UI\n// doesn't need to know which action produced it.\nfunction failureReason(payload) {\n  if (!payload) return null;\n  return payload.skippedReason || payload.message || payload.error || null;\n}\n\n// The dispatch record for a step is always 'sent' or 'skipped' (written by\n// linkedin-dispatch/email-send's Insert Event) - a step can pick up further\n// downstream events later (e.g. a manually-recorded 'accepted') that are\n// newer but aren't the dispatch outcome, so only 'sent'/'skipped' count here.\nconst eventsByStep = new Map();\nfor (const e of events) {\n  if (e.eventType !== 'sent' && e.eventType !== 'skipped') continue;\n  const existing = eventsByStep.get(e.stepId);\n  if (!existing || new Date(e.occurredAt) > new Date(existing.occurredAt)) {\n    eventsByStep.set(e.stepId, e);\n  }\n}\n\n// Anchor for the first not-yet-happened step is the most recent event of any\n// kind (or prospect creation if nothing has fired yet) - matches\n// daily-scheduler's own due-check formula exactly. Steps after that chain\n// off each other's projected time, since every step now proceeds on a fixed\n// delay regardless of success/failure.\nlet cursor = events.length > 0 ? events[events.length - 1].occurredAt : row.createdAt;\n\nconst timeline = steps.map((step) => {\n  const event = eventsByStep.get(step.id);\n  if (event) {\n    const isSent = event.eventType === 'sent';\n    return {\n      stepId: step.id,\n      name: step.name,\n      actionType: step.actionType,\n      status: isSent ? 'completed' : 'skipped',\n      eventType: event.eventType,\n      occurredAt: event.occurredAt,\n      dueAt: null,\n      reason: isSent ? null : failureReason(event.payload),\n    };\n  }\n\n  const isCurrent = step.id === row.currentStepId;\n  const dueAt = new Date(new Date(cursor).getTime() + delayMs(step.delayValue, step.delayUnit)).toISOString();\n  cursor = dueAt;\n\n  return {\n    stepId: step.id,\n    name: step.name,\n    actionType: step.actionType,\n    status: isCurrent ? 'pending' : 'upcoming',\n    eventType: null,\n    occurredAt: null,\n    dueAt,\n    reason: null,\n  };\n});\n\nreturn [{ json: { prospectId: row.prospectId, halted: row.halted, timeline } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [660, 0],
+        "parameters": { "respondWith": "firstIncomingItem", "options": {} }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Get Prospect Timeline Data", "type": "main", "index": 0 }]] },
+      "Get Prospect Timeline Data": { "main": [[{ "node": "Build Timeline", "type": "main", "index": 0 }]] },
+      "Build Timeline": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

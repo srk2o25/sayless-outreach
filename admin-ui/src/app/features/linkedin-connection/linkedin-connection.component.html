@@ -1,45 +1,179 @@
-<div class="nz-card">
-  <div class="nz-card-header">
-    <span class="nz-card-title">LinkedIn connection</span>
+<div class="senders-page">
+  <div class="page-header">
+    <h2>Senders Accounts</h2>
+    <p>Manage the LinkedIn and email accounts you send from</p>
   </div>
 
-  <div class="status-row" *ngIf="!loading">
-    <span class="nz-pill" [class]="'nz-pill--' + (status?.status ?? 'disconnected')">
-      {{ status?.status ?? "disconnected" }}
-    </span>
-    <span class="status-detail" *ngIf="status?.lastConnectedAt">
-      last connected {{ status?.lastConnectedAt | date: "medium" }}
-    </span>
-    <span class="status-detail" *ngIf="!status?.lastConnectedAt">never connected</span>
+  <div class="nz-card">
+    <div class="nz-card-header">
+      <span class="nz-card-title">LinkedIn Accounts</span>
+    </div>
+
+    <div class="account-row" *ngIf="!loading">
+      <div class="account-identity">
+        <div class="account-icon account-icon--linkedin">in</div>
+        <div>
+          <div class="account-name">Cadence LinkedIn seat</div>
+          <div class="account-detail" *ngIf="status?.lastConnectedAt">
+            last connected {{ status?.lastConnectedAt | date: "medium" }}
+          </div>
+          <div class="account-detail" *ngIf="!status?.lastConnectedAt">never connected</div>
+        </div>
+      </div>
+      <div class="account-status">
+        <span class="nz-pill" [class]="'nz-pill--' + (status?.status ?? 'disconnected')">
+          {{ status?.status ?? "disconnected" }}
+        </span>
+        <button
+          type="button"
+          class="btn-secondary"
+          *ngIf="status?.status === 'connected'"
+          [disabled]="disconnecting"
+          (click)="disconnectAccount()"
+        >
+          {{ disconnecting ? "Disconnecting…" : "Disconnect" }}
+        </button>
+        <button type="button" class="btn-primary" *ngIf="status?.status !== 'connected'" (click)="openPicker()">
+          Connect
+        </button>
+      </div>
+    </div>
   </div>
 
-  <p class="card-note">
-    Every action — connection requests, messages, profile visits — runs as whoever is
-    logged in here. Reconnecting opens a real LinkedIn login below; log in yourself,
-    including any 2FA prompt, the same as you would in a normal browser tab.
-  </p>
+  <div class="nz-card">
+    <div class="nz-card-header">
+      <span class="nz-card-title">Email Accounts</span>
+    </div>
 
-  <div class="connect-actions" *ngIf="!connecting">
-    <button type="button" class="btn-primary" (click)="startConnect()">Reconnect LinkedIn</button>
-  </div>
+    <div class="account-row" *ngFor="let account of emailAccounts">
+      <div class="account-identity">
+        <div class="account-icon account-icon--mail">&#64;</div>
+        <div>
+          <div class="account-name">{{ account.email }}</div>
+          <div class="account-detail">{{ account.sentToday }}/{{ account.dailyCap }} sent today</div>
+        </div>
+      </div>
+      <span class="nz-pill nz-pill--connected">connected</span>
+    </div>
 
-  <div class="live-view" *ngIf="connecting">
-    <canvas
-      #canvas
-      [width]="canvasWidth"
-      [height]="canvasHeight"
-      tabindex="0"
-      (mousedown)="onCanvasMouse($event, 'mousePressed')"
-      (mouseup)="onCanvasMouse($event, 'mouseReleased')"
-      (mousemove)="onCanvasMouse($event, 'mouseMoved')"
-      (keydown)="onCanvasKey($event, 'keyDown')"
-      (keyup)="onCanvasKey($event, 'keyUp')"
-    ></canvas>
-    <div class="connect-actions">
-      <button type="button" class="btn-secondary" (click)="cancelConnect()">Cancel</button>
+    <div class="nz-empty-state" *ngIf="emailAccounts.length === 0 && !loadingEmail">
+      No email account configured.
     </div>
   </div>
 
   <div class="nz-empty-state success" *ngIf="loginSuccess">Connected — session saved.</div>
   <div class="nz-empty-state error" *ngIf="errorMessage">{{ errorMessage }}</div>
+</div>
+
+<!-- Picker modal -->
+<div class="nz-modal-overlay" *ngIf="view === 'picker'" (click)="closeModal()">
+  <div class="nz-modal-card" (click)="$event.stopPropagation()">
+    <div class="nz-modal-header">
+      <h3>Reconnect LinkedIn</h3>
+      <button type="button" class="nz-modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <button type="button" class="option-card option-card--recommended" (click)="chooseCredentials()">
+      <div class="option-icon option-icon--recommended">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="13" r="3" />
+          <path d="M9.1 10.9 16 4M14 6l2 2M16.5 3.5l2 2" />
+        </svg>
+      </div>
+      <div class="option-copy">
+        <div class="option-title">Credentials Login <span class="badge">Recommended</span></div>
+        <div class="option-desc">Login securely using your LinkedIn credentials.</div>
+      </div>
+      <span class="option-chevron">&rsaquo;</span>
+    </button>
+
+    <!-- Hidden for now, not removed — chooseLive()/canvas view still exist and are
+         reached automatically via fallback_required when Credentials Login needs
+         extra verification LinkedIn can't do inline. Re-enable by dropping this ngIf. -->
+    <button type="button" class="option-card" *ngIf="false" (click)="chooseLive()">
+      <div class="option-icon">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="4" width="15" height="10.5" rx="1.5" />
+          <path d="M7.5 17.5h5M10 14.5v3" />
+        </svg>
+      </div>
+      <div class="option-copy">
+        <div class="option-title">Full Browser Login</div>
+        <div class="option-desc">See and control a real browser — use this if credentials login needs extra verification.</div>
+      </div>
+      <span class="option-chevron">&rsaquo;</span>
+    </button>
+  </div>
+</div>
+
+<!-- Credentials form modal -->
+<div class="nz-modal-overlay" *ngIf="view === 'credentials-form'">
+  <div class="nz-modal-card">
+    <div class="nz-modal-header">
+      <h3>Credentials Login</h3>
+      <button type="button" class="nz-modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <form class="modal-form" (ngSubmit)="submitCredentials()">
+      <label>
+        <span>Email</span>
+        <input type="email" name="credEmail" [(ngModel)]="credEmail" required autocomplete="username" />
+      </label>
+      <label>
+        <span>Password</span>
+        <input type="password" name="credPassword" [(ngModel)]="credPassword" required autocomplete="current-password" />
+      </label>
+
+      <div class="modal-error" *ngIf="credentialsError">{{ credentialsError }}</div>
+
+      <button type="submit" class="btn-primary" [disabled]="submittingCredentials">
+        {{ submittingCredentials ? "Signing in…" : "Sign in" }}
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- One-time-code prompt modal -->
+<div class="nz-modal-overlay" *ngIf="view === 'code-prompt'">
+  <div class="nz-modal-card">
+    <div class="nz-modal-header">
+      <h3>Enter verification code</h3>
+      <button type="button" class="nz-modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <form class="modal-form" (ngSubmit)="submitCode()">
+      <label>
+        <span>LinkedIn sent a verification code — enter it here</span>
+        <input type="text" name="codeValue" [(ngModel)]="codeValue" required />
+      </label>
+      <button type="submit" class="btn-primary">Submit</button>
+    </form>
+  </div>
+</div>
+
+<!-- Live browser canvas modal -->
+<div class="nz-modal-overlay" *ngIf="view === 'canvas'">
+  <div class="nz-modal-card nz-modal-card--wide">
+    <div class="nz-modal-header">
+      <h3>Full Browser Login</h3>
+      <button type="button" class="nz-modal-close" (click)="cancelConnect()">&times;</button>
+    </div>
+
+    <div class="live-view">
+      <canvas
+        #canvas
+        [width]="canvasWidth"
+        [height]="canvasHeight"
+        tabindex="0"
+        (mousedown)="onCanvasMouse($event, 'mousePressed')"
+        (mouseup)="onCanvasMouse($event, 'mouseReleased')"
+        (mousemove)="onCanvasMouse($event, 'mouseMoved')"
+        (keydown)="onCanvasKey($event, 'keyDown')"
+        (keyup)="onCanvasKey($event, 'keyUp')"
+      ></canvas>
+      <div class="connect-actions">
+        <button type="button" class="btn-secondary" (click)="cancelConnect()">Cancel</button>
+      </div>
+    </div>
+  </div>
 </div>

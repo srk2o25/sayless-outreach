@@ -1,0 +1,111 @@
+[
+  {
+    "id": "cadauthlogin00001",
+    "name": "auth-login",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-auth-login",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "efaca9ee-37af-4705-9310-3b722fddeff4",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["POST"],
+          "path": "auth/login",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-get-user",
+        "name": "Get User",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT id, email, password_hash FROM users WHERE email = $1::text",
+          "options": {
+            "queryReplacement": "={{ [$json.body.email] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-verify-password",
+        "name": "Verify Password",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [440, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const crypto = require('crypto');\nconst body = $('Webhook').first().json.body;\nconst row = $input.first().json;\n\nif (!row.password_hash) {\n  return [{ json: { valid: false, userId: null, email: null, token: null, expiresAt: null } }];\n}\n\nconst [salt, storedHash] = row.password_hash.split(':');\nconst computedHash = crypto.scryptSync(body.password, salt, 64).toString('hex');\nconst a = Buffer.from(storedHash, 'hex');\nconst b = Buffer.from(computedHash, 'hex');\nconst valid = a.length === b.length && crypto.timingSafeEqual(a, b);\n\nif (!valid) {\n  return [{ json: { valid: false, userId: null, email: null, token: null, expiresAt: null } }];\n}\n\nconst token = crypto.randomBytes(32).toString('hex');\nconst expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();\nreturn [{ json: { valid: true, userId: row.id, email: row.email, token, expiresAt } }];"
+        }
+      },
+      {
+        "id": "pg-insert-session",
+        "name": "Insert Session",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [660, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "INSERT INTO sessions (user_id, token, expires_at) SELECT $1::int, $2::text, $3::timestamptz WHERE $4::boolean = true",
+          "options": {
+            "queryReplacement": "={{ [$json.userId, $json.token, $json.expiresAt, $json.valid] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [880, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const v = $('Verify Password').first().json;\nreturn [{ json: v.valid ? { ok: true, token: v.token, email: v.email } : { ok: false } }];"
+        }
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [1100, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Get User", "type": "main", "index": 0 }]] },
+      "Get User": { "main": [[{ "node": "Verify Password", "type": "main", "index": 0 }]] },
+      "Verify Password": { "main": [[{ "node": "Insert Session", "type": "main", "index": 0 }]] },
+      "Insert Session": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]

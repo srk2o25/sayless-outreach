@@ -1,0 +1,80 @@
+@use "../../core/scss/variables.scss" as v;
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: v.$surface-hover;
+}
+
+.login-card {
+  width: 320px;
+  background: #fff;
+  border: 1px solid v.$border-color;
+  border-radius: 12px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.login-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: v.$primary;
+}
+
+.login-subtitle {
+  font-size: 13px;
+  color: v.$label-color;
+  margin: 0 0 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: v.$primary-500;
+  margin-bottom: 14px;
+
+  input {
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid v.$border-color;
+    border-radius: 7px;
+    color: v.$primary;
+
+    &:focus {
+      outline: none;
+      border-color: v.$primary-300;
+    }
+  }
+}
+
+.login-error {
+  font-size: 12px;
+  color: v.$error-color;
+  margin-bottom: 12px;
+}
+
+.login-submit {
+  border: none;
+  border-radius: 8px;
+  background: v.$primary;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: v.$primary-800;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}

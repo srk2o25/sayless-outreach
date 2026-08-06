@@ -9,9 +9,8 @@
 .seq-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px;
+  gap: 14px;
+  padding: 12px;
   border: 1px solid v.$border-color;
   border-radius: 8px;
   background: v.$surface-hover;
@@ -19,23 +18,58 @@
   &.is-off {
     opacity: 0.5;
   }
+
+  &.cdk-drag-preview {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    background: #fff;
+  }
+
+  &.cdk-drag-placeholder {
+    opacity: 0.3;
+  }
+
+  &.cdk-drag-animating {
+    transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+  }
 }
 
-.seq-main {
-  min-width: 0;
+.seq-list.cdk-drop-list-dragging .seq-row:not(.cdk-drag-placeholder) {
+  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.seq-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  flex-shrink: 0;
+  color: v.$primary-300;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .seq-name-row {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 5px;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .seq-idx {
   font-size: 10.5px;
   color: v.$primary-300;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .seq-name {
@@ -47,7 +81,8 @@
 .seq-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .chip {
@@ -70,6 +105,24 @@
 .chip-value {
   font-size: 11.5px;
   color: v.$primary-400;
+}
+
+.delay-input {
+  width: 64px;
+  font-size: 13px;
+  color: v.$primary-500;
+  border: 1px solid v.$border-color;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.delay-unit-select {
+  font-size: 13px;
+  color: v.$primary-500;
+  border: 1px solid v.$border-color;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
 }
 
 .toggle {
@@ -103,10 +156,4 @@
       left: 15px;
     }
   }
-}
-
-.card-note {
-  font-size: 12px;
-  color: v.$primary-300;
-  margin: 0;
 }

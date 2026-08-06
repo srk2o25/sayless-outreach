@@ -11,6 +11,18 @@ export function hasSession(): boolean {
   return fs.existsSync(SESSION_FILE);
 }
 
+// Disconnect action: deletes the captured session so every subsequent
+// dispatch fails fast with "no session" until someone reconnects, rather
+// than silently continuing to use a session the admin explicitly ended.
+export function clearSession(): void {
+  if (isConnectSessionActive()) {
+    throw new Error("LinkedIn connect session in progress — disconnect deferred.");
+  }
+  if (fs.existsSync(SESSION_FILE)) {
+    fs.unlinkSync(SESSION_FILE);
+  }
+}
+
 // Every action module calls this — it is the only place a browser context is created,
 // so the LinkedIn session never leaks into any other part of the codebase.
 export async function withSession<T>(

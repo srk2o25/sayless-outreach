@@ -36,6 +36,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.4,
         "position": [440, 0],
+        "onError": "continueRegularOutput",
         "parameters": {
           "method": "POST",
           "url": "={{ $env.LINKEDIN_WORKER_URL }}/actions/{{$json.endpoint}}",
@@ -87,9 +88,9 @@
         "parameters": {
           "resource": "database",
           "operation": "executeQuery",
-          "query": "UPDATE prospects SET current_step_id = $1::int, status = CASE WHEN $1::int IS NULL THEN 'completed' ELSE 'sent' END WHERE id = $2::int AND $3::boolean = true",
+          "query": "UPDATE prospects SET current_step_id = $1::int, status = CASE WHEN $1::int IS NULL THEN 'completed' ELSE 'sent' END WHERE id = $2::int",
           "options": {
-            "queryReplacement": "={{ [$('Build Event').first().json.next_step_id, $('Build Event').first().json.prospect_id, $('Build Event').first().json.ok] }}"
+            "queryReplacement": "={{ [$('Build Event').first().json.next_step_id, $('Build Event').first().json.prospect_id] }}"
           }
         },
         "credentials": {

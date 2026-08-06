@@ -4,7 +4,7 @@ import { sendConnectionRequest } from "./actions/connect.js";
 import { sendMessage } from "./actions/message.js";
 import { visitProfile } from "./actions/visit.js";
 import { inviteToPage } from "./actions/invite.js";
-import { hasSession } from "./session/session.js";
+import { hasSession, clearSession } from "./session/session.js";
 import { isConnectSessionActive } from "./session/connect-lock.js";
 import { startConnectSession } from "./session/connect-session.js";
 
@@ -40,6 +40,15 @@ app.post("/actions/connect", handleAction(sendConnectionRequest));
 app.post("/actions/message", handleAction(sendMessage));
 app.post("/actions/visit", handleAction(visitProfile));
 app.post("/actions/invite", handleAction(inviteToPage));
+
+// Admin-initiated disconnect — clears the session file so a stale/unwanted
+// session can't keep being used. Not part of the dispatch action set above
+// (no profileUrl, nothing to rate-limit), but shares the same
+// throw-safe wrapper.
+app.post("/actions/disconnect", handleAction(async () => {
+  clearSession();
+  return { ok: true };
+}));
 
 const server = app.listen(PORT, () => {
   console.log(`linkedin-worker listening on :${PORT}`);

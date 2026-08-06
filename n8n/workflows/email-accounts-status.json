@@ -1,0 +1,74 @@
+[
+  {
+    "id": "cademailaccounts01",
+    "name": "email-accounts-status",
+    "active": false,
+    "nodes": [
+      {
+        "id": "wh-email-accounts",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "449f7ad1-7c48-4ee5-85d5-4a55839e0de6",
+        "position": [0, 0],
+        "parameters": {
+          "httpMethod": ["GET"],
+          "path": "email-accounts",
+          "responseMode": "responseNode",
+          "options": {}
+        }
+      },
+      {
+        "id": "pg-sent-today",
+        "name": "Get Sent Today",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [220, 0],
+        "parameters": {
+          "resource": "database",
+          "operation": "executeQuery",
+          "query": "SELECT count(*) AS sent_today FROM events e JOIN sequence_steps s ON s.id = e.step_id WHERE s.action_type IN ('email', 'email_followup') AND e.event_type = 'sent' AND e.occurred_at >= date_trunc('day', now())",
+          "options": {}
+        },
+        "credentials": {
+          "postgres": {
+            "id": "ad89957357f3e9774fe7b759",
+            "name": "Cadence Postgres"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "code-build-response",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [440, 0],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const sentToday = Number($input.first().json.sent_today ?? 0);\nconst email = $env.BREVO_SENDER_EMAIL;\nif (!email) return [];\nreturn [{ json: { email, name: $env.BREVO_SENDER_NAME ?? null, dailyCap: Number($env.EMAIL_DAILY_CAP_PER_INBOX), sentToday } }];"
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "respond",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [660, 0],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $input.all().filter(i => Object.keys(i.json).length > 0).map(item => item.json) }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": { "main": [[{ "node": "Get Sent Today", "type": "main", "index": 0 }]] },
+      "Get Sent Today": { "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]] },
+      "Build Response": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    },
+    "settings": {}
+  }
+]
