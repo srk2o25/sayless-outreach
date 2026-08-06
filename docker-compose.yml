@@ -60,6 +60,11 @@ services:
       LI_DAILY_VISIT_CAP: ${LI_DAILY_VISIT_CAP}
       LI_MIN_ACCEPT_RATE: ${LI_MIN_ACCEPT_RATE}
       EMAIL_DAILY_CAP_PER_INBOX: ${EMAIL_DAILY_CAP_PER_INBOX}
+      # Node/V8 sizes its default heap off total host RAM, not the container's
+      # cgroup limit — without this it tries to grow past `memory:` below and
+      # gets OOM-killed. Cap held under the container limit to leave headroom
+      # for non-heap process memory (native addons, buffers, etc).
+      NODE_OPTIONS: --max-old-space-size=480
     ports:
       - "${N8N_PORT}:5678"
     volumes:
@@ -68,7 +73,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 500m
+          memory: 700m
 
   linkedin-worker:
     build: ./linkedin-worker
