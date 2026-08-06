@@ -20,6 +20,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 300m
 
   n8n:
     image: n8nio/n8n:latest
@@ -61,6 +65,10 @@ services:
     volumes:
       - n8n-data:/home/node/.n8n
       - ./n8n/workflows:/home/node/.n8n/workflows-export
+    deploy:
+      resources:
+        limits:
+          memory: 500m
 
   linkedin-worker:
     build: ./linkedin-worker
@@ -80,6 +88,10 @@ services:
       - "${LINKEDIN_WORKER_PORT}:${LINKEDIN_WORKER_PORT}"
     volumes:
       - linkedin-session:/app/session-state
+    deploy:
+      resources:
+        limits:
+          memory: 600m
 
   admin-ui:
     build: ./admin-ui
@@ -91,6 +103,10 @@ services:
     depends_on:
       - n8n
       - linkedin-worker
+    deploy:
+      resources:
+        limits:
+          memory: 100m
 
 volumes:
   db-data:
