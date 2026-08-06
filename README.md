@@ -1,4 +1,4 @@
-# Cadence
+# Sayless Outreach
 
 Self-hosted engine that runs a pre-qualified prospect list through a configurable outbound sequence (LinkedIn + email). Internal tool for Sayless growth — standalone from `crewzo-webapp` by design.
 

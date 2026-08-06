@@ -4,7 +4,7 @@ The only service in this repo permitted to hold a LinkedIn session. No other mod
 
 ## Before running anything
 
-Run `npm run login` locally (headed browser) once, log in by hand on the dedicated Cadence LinkedIn seat, and let it write `session-state/linkedin.json`. Never generate or edit that file by hand; never commit it (`.gitignore` at repo root already excludes it).
+Run `npm run login` locally (headed browser) once, log in by hand on the dedicated Sayless Outreach LinkedIn seat, and let it write `session-state/linkedin.json`. Never generate or edit that file by hand; never commit it (`.gitignore` at repo root already excludes it).
 
 ## Conventions
 

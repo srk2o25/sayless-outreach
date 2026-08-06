@@ -1,6 +1,6 @@
 # db — Standards
 
-Postgres is the sole system of record for Cadence. It has its own instance and credentials — never point it at, sync with, or read from the production Airtable base.
+Postgres is the sole system of record for Sayless Outreach. It has its own instance and credentials — never point it at, sync with, or read from the production Airtable base.
 
 ## Migration conventions
 

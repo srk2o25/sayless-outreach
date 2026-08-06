@@ -1,4 +1,4 @@
-# Cadence — Project Standards
+# Sayless Outreach — Project Standards
 
 Standalone repo. Not part of `crewzo-webapp` — no shared deploy pipeline, no shared database, no shared Airtable credentials.
 

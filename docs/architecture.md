@@ -1,4 +1,4 @@
-# Cadence — architecture
+# Sayless Outreach — architecture
 
 Self-hosted engine that runs a pre-qualified prospect list through a configurable outbound sequence. See root `README.md` for the one-line pitch and each module's `CLAUDE.md` for its own conventions.
 
@@ -8,7 +8,7 @@ Self-hosted engine that runs a pre-qualified prospect list through a configurabl
 [ Batch upload ]                admin-ui — CSV/XLSX, curated manually, ~tens of rows per batch
         |
         v
-[ Cadence DB · Postgres ]       own instance, own credentials
+[ Sayless Outreach DB · Postgres ]  own instance, own credentials
         |                       tables: campaigns, prospects, sequence_steps, events
         |                       ── no connection to the customer Airtable base ──
         v
@@ -56,8 +56,8 @@ At "tens of prospects per batch," one LinkedIn seat and one Brevo-authenticated 
 
 ## Data isolation
 
-Cadence's Postgres instance is the sole system of record. No API key, sync job, or shared table connects it to the production Airtable CRM. File upload is the only ingestion path today; a future CRM-sourced signal feed would be a new, explicitly-scoped migration, not an incidental connection.
+Sayless Outreach's Postgres instance is the sole system of record. No API key, sync job, or shared table connects it to the production Airtable CRM. File upload is the only ingestion path today; a future CRM-sourced signal feed would be a new, explicitly-scoped migration, not an incidental connection.
 
 ## Deployment
 
-Standalone repo (`cadence`, sibling to `crewzo-webapp`), own Docker Compose stack, own network. See `infra/deploy-notes.md` for the specific host.
+Standalone repo (`sayless-outreach`, sibling to `crewzo-webapp`), own Docker Compose stack, own network. See `infra/deploy-notes.md` for the specific host.

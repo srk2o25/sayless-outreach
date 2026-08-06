@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 LOG_DIR=".dev-logs"
 mkdir -p "$LOG_DIR"
 
-echo "== Cadence dev environment =="
+echo "== Sayless Outreach dev environment =="
 echo ""
 
 if ! docker info >/dev/null 2>&1; then

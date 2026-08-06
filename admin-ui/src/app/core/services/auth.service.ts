@@ -3,7 +3,7 @@ import { HttpClient } from "@angular/common/http";
 import { Observable, map, tap } from "rxjs";
 import { environment } from "../../../environments/environment";
 
-const TOKEN_KEY = "cadence_auth_token";
+const TOKEN_KEY = "sayless_outreach_auth_token";
 
 interface LoginResponse {
   ok: boolean;

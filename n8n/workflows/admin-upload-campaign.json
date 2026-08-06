@@ -74,7 +74,7 @@
         "credentials": {
           "postgres": {
             "id": "ad89957357f3e9774fe7b759",
-            "name": "Cadence Postgres"
+            "name": "Sayless Outreach Postgres"
           }
         }
       },
@@ -98,7 +98,7 @@
         "credentials": {
           "postgres": {
             "id": "ad89957357f3e9774fe7b759",
-            "name": "Cadence Postgres"
+            "name": "Sayless Outreach Postgres"
           }
         }
       },
@@ -122,7 +122,7 @@
         "credentials": {
           "postgres": {
             "id": "ad89957357f3e9774fe7b759",
-            "name": "Cadence Postgres"
+            "name": "Sayless Outreach Postgres"
           }
         }
       },
@@ -162,7 +162,7 @@
         "credentials": {
           "postgres": {
             "id": "ad89957357f3e9774fe7b759",
-            "name": "Cadence Postgres"
+            "name": "Sayless Outreach Postgres"
           }
         }
       },
@@ -215,7 +215,7 @@
         "credentials": {
           "postgres": {
             "id": "ad89957357f3e9774fe7b759",
-            "name": "Cadence Postgres"
+            "name": "Sayless Outreach Postgres"
           }
         }
       }

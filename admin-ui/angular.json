@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "cadence-admin-ui": {
+    "sayless-outreach-admin-ui": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -12,7 +12,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/cadence-admin-ui",
+            "outputPath": "dist/sayless-outreach-admin-ui",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -39,8 +39,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "cadence-admin-ui:build:production" },
-            "development": { "buildTarget": "cadence-admin-ui:build:development" }
+            "production": { "buildTarget": "sayless-outreach-admin-ui:build:production" },
+            "development": { "buildTarget": "sayless-outreach-admin-ui:build:development" }
           },
           "defaultConfiguration": "development"
         }

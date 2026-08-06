@@ -1,3 +1,5 @@
+name: sayless-outreach
+
 services:
   db:
     image: postgres:16-alpine
@@ -10,9 +12,9 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./db/migrations:/cadence-migrations:ro
-      - ./db/seed:/cadence-seed:ro
-      - ./db/docker-entrypoint-initdb.sh:/docker-entrypoint-initdb.d/00-cadence.sh:ro
+      - ./db/migrations:/sayless-outreach-migrations:ro
+      - ./db/seed:/sayless-outreach-seed:ro
+      - ./db/docker-entrypoint-initdb.sh:/docker-entrypoint-initdb.d/00-sayless-outreach.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s

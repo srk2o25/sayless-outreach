@@ -1,6 +1,6 @@
 # Internal tool today, product tomorrow
 
-This repo is built to run Cadence for one org (Sayless) with one shared login.
+This repo is built to run Sayless Outreach for one org (Sayless) with one shared login.
 Several pieces are deliberately simple for that scope, but shaped so that
 becoming a distributable multi-tenant product later is additive work, not a
 rewrite. This doc is the durable record of that split — what's built simply

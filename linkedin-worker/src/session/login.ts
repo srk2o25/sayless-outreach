@@ -24,7 +24,7 @@ async function main(): Promise<void> {
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   await rl.question(
-    "Log in to the Cadence LinkedIn seat in the opened browser, then press Enter here...\n"
+    "Log in to the Sayless Outreach LinkedIn seat in the opened browser, then press Enter here...\n"
   );
   rl.close();
 

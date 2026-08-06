@@ -31,7 +31,7 @@
           "options": {}
         },
         "credentials": {
-          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Cadence Postgres" }
+          "postgres": { "id": "ad89957357f3e9774fe7b759", "name": "Sayless Outreach Postgres" }
         }
       },
       {

@@ -2,7 +2,7 @@
   "name": "linkedin-worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Playwright automation service for Cadence — the only service that touches a real LinkedIn session.",
+  "description": "Playwright automation service for Sayless Outreach — the only service that touches a real LinkedIn session.",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",

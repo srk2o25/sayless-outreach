@@ -115,7 +115,7 @@ export class BatchesComponent implements OnInit {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "cadence-sample-prospects.csv";
+    link.download = "sayless-outreach-sample-prospects.csv";
     link.click();
     URL.revokeObjectURL(url);
   }
