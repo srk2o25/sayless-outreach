@@ -49,4 +49,16 @@ Add Brevo's SPF/DKIM/DMARC records to `sayless.co.in`'s DNS (root domain, not a 
 
 ## Status
 
-Not yet deployed. Update this file once the target instance is confirmed.
+Deployed 2026-08-06 on the shared crewzo-webapp EC2 instance (resized to t3.small / 2GB RAM,
+30GB disk, to make room for this stack). Running via `docker compose -p sayless-outreach up -d`,
+all four services healthy: `db`, `n8n`, `linkedin-worker`, `admin-ui`. Ports left at their
+`.env.example` defaults (5432/5678/4100/4300) — none collided with crewzo-webapp's MySQL (3306)
+or .NET API (5000).
+
+n8n needed an explicit `NODE_OPTIONS=--max-old-space-size=480` — without it, Node/V8 sized its
+default heap off total host RAM (1.9GB) instead of the container's cgroup memory limit and
+crash-looped with an OOM. Keep this in mind if n8n's memory limit is raised later — the heap cap
+should stay comfortably under whatever the container limit is.
+
+Not yet done: LinkedIn session login (needs a local interactive browser — see step below), public
+subdomain + SSL + basic auth (tracked separately, not part of this repo's scope).
